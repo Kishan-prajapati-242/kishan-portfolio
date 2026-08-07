@@ -55,6 +55,15 @@
   --text-section: clamp(2.625rem, 6.25vw, 5.625rem);
   --text-stat: clamp(2.5rem, 4.9vw, 4.375rem);
   --text-row-title: 1.625rem;
+
+  /* Motion tokens. Distances: text 16px, cards 24px, nothing over 32px. */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 160ms;
+  --dur-fast: 240ms;
+  --dur-base: 420ms;
+  --dur-slow: 700ms;
+  --dur-hero: 900ms;
 }
 
 /* Dark tokens, DESIGN.md section 2. Applied via the .dark class on html,
@@ -441,6 +450,12 @@
     color: color-mix(in oklab, var(--color-ink) 18%, var(--color-paper));
   }
 
+  /* The mask wrapper must not introduce its own line box metrics. */
+  .display .line,
+  .section-h .line {
+    line-height: inherit;
+  }
+
   /* Below the shell breakpoint the profile column stops being sticky, moves to
      the top, and the display headings centre. Everything else stays left. */
   @media (max-width: 1023px) {
@@ -577,7 +592,282 @@
   }
 }
 
-/* Reduced motion, DESIGN.md section 7, verbatim */
+/* ============================================================================
+   MOTION
+   Documented in DESIGN.md section 7.
+
+   Two clocks. The hero runs on a time-based clock because elements already on
+   screen at load have no entry to scroll through. Everything below the first
+   viewport runs on a scroll clock via animation-timeline: view().
+
+   Never set animation-duration on a scroll timeline: scroll position is the
+   clock and the duration is ignored. Stagger on a scroll timeline is therefore
+   expressed as an animation-range offset, not a delay, because there is no
+   time axis to delay along.
+
+   Only opacity, transform and clip-path are animated. No will-change anywhere:
+   the browser promotes layers itself and preemptive hints waste memory on an
+   8 GB machine.
+   ============================================================================ */
+
+@keyframes reveal-up { to { opacity: 1; transform: none; } }
+@keyframes reveal-fade { to { opacity: 1; } }
+@keyframes line-up { to { transform: none; } }
+@keyframes wipe-up { to { clip-path: inset(0 0 0 0); } }
+@keyframes progress-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Per-line mask. The text stays in flow and is never removed from the DOM, so
+   it is readable at all times even if an animation never runs. Uppercase
+   display type has no descenders, and the padding pair covers the rest. */
+.line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.line-in {
+  display: block;
+}
+
+/* ---- Page load, hero only, time-based ---------------------------------- */
+
+.hero-nav {
+  opacity: 0;
+  animation: reveal-fade var(--dur-base) var(--ease-out-quart) both;
+}
+
+.profile {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: reveal-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+/* clip-path rather than width, so the wipe is independent of the image
+   dimensions and stays on the compositor. */
+.profile .portrait {
+  clip-path: inset(0 0 100% 0);
+  animation: wipe-up var(--dur-slow) var(--ease-out-expo) 120ms both;
+}
+
+.display .line-in {
+  transform: translateY(110%);
+  animation: line-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.display .line:nth-child(1) .line-in { animation-delay: 200ms; }
+.display .line:nth-child(2) .line-in { animation-delay: 280ms; }
+
+.display-lede {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: reveal-up var(--dur-base) var(--ease-out-quart) 420ms both;
+}
+
+.stats > li {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: reveal-up var(--dur-base) var(--ease-out-quart) both;
+}
+
+.stats > li:nth-child(1) { animation-delay: 520ms; }
+.stats > li:nth-child(2) { animation-delay: 590ms; }
+.stats > li:nth-child(3) { animation-delay: 660ms; }
+
+/* The figures wipe rather than count up. Counting needs JavaScript, screen
+   readers read the intermediate values, and it is a cliche. */
+.stat-value {
+  clip-path: inset(0 0 100% 0);
+  animation: wipe-up var(--dur-base) var(--ease-out-expo) both;
+}
+
+.stats > li:nth-child(1) .stat-value { animation-delay: 560ms; }
+.stats > li:nth-child(2) .stat-value { animation-delay: 630ms; }
+.stats > li:nth-child(3) .stat-value { animation-delay: 700ms; }
+
+.focus > * {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: reveal-up var(--dur-base) var(--ease-out-quart) both;
+}
+
+.focus > *:nth-child(1) { animation-delay: 680ms; }
+.focus > *:nth-child(2) { animation-delay: 750ms; }
+.focus > *:nth-child(3) { animation-delay: 820ms; }
+.focus > *:nth-child(4) { animation-delay: 890ms; }
+
+/* ---- Scroll reveals ----------------------------------------------------- */
+/* Everything in here is guarded. In the fallback the elements are simply
+   visible and static: there is no state where an unsupported browser gets
+   invisible content, because the hidden state only exists inside the guard. */
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+
+  .reveal-text {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+
+  /* Labels land before the heading they introduce. */
+  .reveal-label {
+    opacity: 0;
+    animation: reveal-fade linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+
+  /* Tables fade only. A table sliding while someone reads a number is
+     irritating. */
+  .prose .data-table {
+    opacity: 0;
+    animation: reveal-fade linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+
+  /* Section headings mask-reveal per line on the scroll clock. */
+  .section-h .line-in {
+    transform: translateY(110%);
+    animation: line-up linear both;
+    animation-timeline: view();
+    animation-range: entry 10% entry 50%;
+  }
+
+  .section-h .line:nth-child(2) .line-in {
+    animation-range: entry 16% entry 56%;
+  }
+
+  /* Grid children each get their own timeline, so a card entering alone still
+     animates. Stagger is a range offset because a scroll timeline has no time
+     axis to delay along. Five steps, then the cycle resets. */
+  .card-grid > *,
+  .rows > .row {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+  }
+
+  .card-grid > *:nth-child(5n + 1),
+  .rows > .row:nth-child(5n + 1) { animation-range: entry 0% entry 45%; }
+  .card-grid > *:nth-child(5n + 2),
+  .rows > .row:nth-child(5n + 2) { animation-range: entry 5% entry 50%; }
+  .card-grid > *:nth-child(5n + 3),
+  .rows > .row:nth-child(5n + 3) { animation-range: entry 10% entry 55%; }
+  .card-grid > *:nth-child(5n + 4),
+  .rows > .row:nth-child(5n + 4) { animation-range: entry 15% entry 60%; }
+  .card-grid > *:nth-child(5n + 5),
+  .rows > .row:nth-child(5n + 5) { animation-range: entry 20% entry 65%; }
+
+  /* The hero grids are on the time clock, not the scroll clock. */
+  .focus > * {
+    animation-timeline: auto;
+  }
+
+  /* Last screen. An element near the bottom of a short page can never complete
+     an entry range, because the page cannot scroll far enough. cover lets it
+     finish. */
+  .section:last-of-type .reveal,
+  .section:last-of-type .reveal-text,
+  .section:last-of-type .card-grid > *,
+  .section:last-of-type .rows > .row,
+  .section:last-of-type .section-h .line-in,
+  .shell-main > :last-child .card-grid > *,
+  .shell-main > :last-child .rows > .row,
+  .shell-main > :last-child .section-h .line-in {
+    animation-range: entry 0% cover 40%;
+  }
+
+  /* Scroll progress, one rule and no JavaScript. */
+  .scroll-progress {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background-color: var(--color-plot);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* ---- Micro-interactions ------------------------------------------------- */
+/* Every hover state below also fires on :focus-visible. */
+
+.card {
+  transition: border-color var(--dur-fast) var(--ease-out-quart),
+    transform var(--dur-fast) var(--ease-out-quart);
+}
+
+.card:hover,
+.card:focus-within {
+  transform: translateY(-2px);
+}
+
+button {
+  transition: background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart),
+    color var(--dur-fast) var(--ease-out-quart),
+    transform var(--dur-micro) var(--ease-out-quart);
+}
+
+button:hover,
+button:focus-visible {
+  background-color: var(--color-plot-soft);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* ---- Reduced motion ----------------------------------------------------- */
+/* animation-timeline: auto is the part people forget. Without it a
+   reduced-motion user can be left with an element frozen in its scroll-driven
+   start state, which means invisible. */
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    animation-timeline: auto !important;
+  }
+
+  .reveal,
+  [class*="reveal"],
+  .line-in,
+  .card-grid > *,
+  .rows > .row,
+  .stats > li,
+  .stat-value,
+  .focus > *,
+  .profile,
+  .profile .portrait,
+  .display-lede,
+  .prose .data-table {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+
+  .scroll-progress {
+    display: none;
+  }
 }

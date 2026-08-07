@@ -3,8 +3,13 @@
 // line at 18 percent, uppercase, line-height 1, tracking zero.
 //
 // text-transform does the uppercasing rather than the source text being typed
-// in capitals, which is how the reference does it. That keeps the DOM text and
-// the accessible name in sentence case.
+// in capitals, which keeps the DOM text and the accessible name in sentence
+// case.
+//
+// Each line is wrapped in a mask span so it can reveal by sliding up behind
+// its own overflow. The lines are split in the markup, not by JavaScript, and
+// the text stays in normal flow throughout, so it is readable even if the
+// animation never runs.
 export interface Props {
   solid: string;
   ghost?: string;
@@ -16,6 +21,6 @@ const { solid, ghost, id, as: Tag = 'h2' }: Props = Astro.props;
 const cls = Tag === 'h1' ? 'display' : 'section-h';
 ---
 <Tag class={cls} id={id}>
-  {solid}
-  {ghost && <span class="ghost">{ghost}</span>}
+  <span class="line"><span class="line-in">{solid}</span></span>
+  {ghost && <span class="line ghost"><span class="line-in">{ghost}</span></span>}
 </Tag>

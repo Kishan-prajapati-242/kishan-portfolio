@@ -16,7 +16,7 @@ const items = [
 const path = Astro.url.pathname;
 const isCurrent = (href: string) => path === href || path === `${href}/` || path.startsWith(`${href}/`);
 ---
-<header class="site-header">
+<header class="site-header hero-nav">
   <a href="/" class="home-link t-label">Kishan Prajapati</a>
 
   <button id="nav-toggle" type="button" class="nav-toggle t-label" aria-expanded="false" aria-controls="site-nav">
@@ -44,15 +44,17 @@ const isCurrent = (href: string) => path === href || path === `${href}/` || path
 </header>
 
 <script>
-  const toggle = document.getElementById('nav-toggle');
-  const group = document.getElementById('site-nav');
-  if (toggle && group) {
+  document.addEventListener('astro:page-load', () => {
+    const toggle = document.getElementById('nav-toggle');
+    const group = document.getElementById('site-nav');
+    if (!toggle || !group || toggle.dataset.bound === 'true') return;
+    toggle.dataset.bound = 'true';
     toggle.addEventListener('click', () => {
       const expanded = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', String(!expanded));
       group.classList.toggle('open', !expanded);
     });
-  }
+  });
 </script>
 
 <style>

@@ -97,6 +97,7 @@ const meta = [
   // Marks the rail entry for the section currently in view. This is the only
   // JavaScript on a case study page and it is a few hundred bytes: no
   // framework, no scroll library.
+  document.addEventListener('astro:page-load', () => {
   const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-rail-link]'));
   const headings = Array.from(document.querySelectorAll<HTMLElement>('.prose h2[id]'));
 
@@ -120,6 +121,7 @@ const meta = [
 
     headings.forEach((h) => observer.observe(h));
   }
+  });
 </script>
 
 <style>

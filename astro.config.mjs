@@ -12,7 +12,15 @@ export default defineConfig({
   site: 'https://kishan-prajapati.vercel.app',
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    build: {
+      // Lightning CSS folds `animation-timeline` into the `animation`
+      // shorthand, producing `animation: linear both reveal-up view()`. That
+      // is valid CSS Animations Level 2 and no browser implements it, so the
+      // whole declaration is dropped and every scroll reveal stays stuck in
+      // its start state. esbuild leaves the longhand alone.
+      cssMinify: 'esbuild',
+    },
   },
 
   integrations: [sitemap(), mdx()]

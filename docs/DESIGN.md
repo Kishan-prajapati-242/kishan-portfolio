@@ -281,21 +281,190 @@ Used roughly eight times across the site. It is not a warning box and must not l
 
 ## 7. MOTION
 
-Two animations exist on this site. That is the complete list.
+Supersedes the previous version of this section, which said two animations
+existed and that was the complete list. It is now a system, described below.
 
-1. **Hero plot draw.** The recall curve path animates its `stroke-dashoffset` from full length to zero over `900ms` with `ease-out`, once, on load. The operating-point marker fades in at `900ms` over `200ms`. Axis lines and labels are present immediately, not animated.
-2. **Link underline.** Links carry a 1px underline at `--color-plot` that thickens to 2px on hover and focus over `120ms`. No colour change, no transform, no translate.
+### Two clocks
 
-Everything else is static. No scroll-triggered reveals, no fade-up-on-scroll, no parallax, no counters that tick up, no marquees, no cursor followers.
+Motion runs on two different clocks and the distinction is the whole design.
+
+**Time-based, for the hero.** Elements already on screen at load have no entry
+to scroll through, so a scroll timeline would leave them stuck part way or
+invisible. The nav, sidebar, portrait, `h1`, lede, stats and capability cards
+all animate on a time clock at load. Only content below the first viewport uses
+a scroll timeline.
+
+**Scroll-based, for everything else.** `animation-timeline: view()`. No
+IntersectionObserver, no library, no added client JavaScript.
+
+```css
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: reveal-up linear both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 45%;
+}
+@keyframes reveal-up { to { opacity: 1; transform: none; } }
+```
+
+### Five rules that are not negotiable
+
+1. `animation-fill-mode: both`, always. Without it the element resets when
+   scrolled back up.
+2. Never set `animation-duration` on a scroll timeline. It is ignored. Scroll
+   position is the clock. This is also why **stagger on a scroll timeline is an
+   `animation-range` offset, not a delay**: there is no time axis to delay
+   along. Siblings step 5 percent of entry apart, five deep, then the cycle
+   resets.
+3. Animate only `opacity`, `transform` and `clip-path`. Never `width`,
+   `height`, `margin`, `top` or `padding`. Use `scaleX` and translate instead.
+4. No `will-change` anywhere. The browser promotes layers itself and
+   preemptive hints waste memory, which matters on 8 GB.
+5. Every scroll-driven rule sits inside
+   `@supports (animation-timeline: view())`. Support is roughly 84 to 90
+   percent. The hidden start state lives **inside** the guard, so in the
+   fallback elements are simply visible and static. There is no state in which
+   an unsupported browser gets invisible content.
+
+Do not use `animation-trigger`. Chrome and Edge only as of mid 2026.
+
+### The build trap that cost an hour
+
+Lightning CSS folds `animation-timeline` into the `animation` shorthand,
+emitting `animation: linear both reveal-up view()`. That is valid CSS
+Animations Level 2 and **no browser implements it**, so the whole declaration is
+dropped, `animation-name` computes to `none`, and every reveal stays frozen in
+its start state. It fails silently and only at build, never in dev.
+
+`astro.config.mjs` therefore pins `vite.build.cssMinify: 'esbuild'`. If reveals
+ever go blank again, check the compiled CSS for `view()` inside the `animation`
+shorthand before checking anything else.
+
+### The two gotchas
+
+**Above the fold.** Covered by the time clock above. Never put `.reveal` on
+anything in the first viewport.
+
+**Last screen.** An element near the bottom of a short page can never complete
+an entry range, because the page cannot scroll far enough. The final section on
+every page uses `animation-range: entry 0% cover 40%`. Selector precision
+matters: `main > :last-child` matches the shell wrapper and silently applies the
+last-screen range to the entire page, so the rule targets
+`.section:last-of-type` and `.shell-main > :last-child`. Verified on `/404` and
+`/work/moodlens`, the two shortest pages.
+
+### Tokens
+
+```css
+--ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+--ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+--dur-micro: 160ms;
+--dur-fast:  240ms;
+--dur-base:  420ms;
+--dur-slow:  700ms;
+--dur-hero:  900ms;
+```
+
+Text moves 16px, cards move 24px, nothing moves more than 32px. Long travel
+reads as cheap and feels laggy. Stagger siblings 70ms apart on the time clock,
+maximum five in a chain, then reset.
+
+### Page load sequence
+
+| at | element | motion |
+|---|---|---|
+| 0ms | nav | fade only, no movement |
+| 0ms | sidebar card | fade and 16px rise, `--dur-slow`, `--ease-out-expo` |
+| 120ms | portrait | `clip-path` wipe from `inset(0 0 100% 0)`, `--dur-slow` |
+| 200ms | `h1` | per-line mask reveal, 80ms between lines, `--dur-slow` |
+| 420ms | lede | fade and 16px rise, `--dur-base` |
+| 520ms | three stats | 70ms stagger, fade and 16px rise |
+| 560ms | stat figures | `clip-path` wipe from the bottom |
+| 680ms | capability cards | 70ms stagger |
+
+The portrait uses `clip-path` rather than `width` so the reveal is independent
+of the image dimensions and stays on the compositor.
+
+**The figures do not count up.** Counting needs JavaScript, screen readers read
+the intermediate values, and it is a cliche. They wipe instead.
+
+### Scroll reveals, per element
+
+| element | motion | range |
+|---|---|---|
+| section heading | per-line mask reveal | `entry 10% entry 50%` |
+| eyebrow label | fade only | `entry 0% entry 30%` |
+| cards in a grid | fade, 24px rise, scale 0.98 to 1 | staggered, own `view()` timeline each |
+| list rows | same as cards | staggered |
+| tables | fade only, no movement | `entry 0% entry 40%` |
+| case study prose | **none** | |
+| notes page body | **none**, headings only | |
+
+Each grid item gets its own `view()` timeline rather than one shared timeline,
+so a card entering alone still animates. Tables never move: a table sliding
+while someone is reading a number is irritating. Case study prose and the notes
+body get no reveal at all, because paragraph-by-paragraph fade-in on a page
+someone is actually reading is hostile.
+
+### Scroll progress
+
+A 2px bar fixed to the top of the viewport in `--color-plot`, `scaleX` 0 to 1
+on `animation-timeline: scroll(root block)`. One rule, no JavaScript,
+`aria-hidden`.
+
+### Micro-interactions
+
+Cards: border to `--color-plot` over `--dur-fast` plus `translateY(-2px)`. No
+shadow, no scale, no lift beyond 2px. Links: 1px to 2px underline over
+`--dur-micro`. Buttons: background fill over `--dur-fast`, and `scale(0.98)` on
+`:active` over `--dur-micro` so a click feels physical. Social icons:
+`--color-ink-2` to `--color-plot` over `--dur-micro`.
+
+**Every hover state also fires on `:focus-visible`.** A keyboard user gets the
+same feedback.
+
+### Page transitions
+
+`<ClientRouter fallback="animate" />` in `Base.astro`, fade at 240ms, not
+slide. Slide on a five-page portfolio reads as a gimmick.
+
+Three things it breaks, all handled:
+
+1. **Scripts do not re-run after client-side navigation.** The theme toggle,
+   the mobile nav and the case study rail all rebind on `astro:page-load`,
+   which fires on the initial load and on every navigation, guarded by a
+   `data-bound` flag so a persisted node is not double-bound.
+2. **The theme class can flash**, because the router swaps `<html>` attributes.
+   The inline pre-paint script stays, and a second inline listener reapplies
+   the class on `astro:after-swap`, in the same frame as the swap.
+3. **The sidebar carries `transition:persist`** so it does not replay its entry
+   animation on every navigation. Only the profile branch persists; the case
+   study rail differs per page and must not be carried over.
+
+### Accessibility
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    animation-timeline: auto !important;
+  }
+  .reveal, [class*="reveal"] { opacity: 1 !important; transform: none !important; clip-path: none !important; }
 }
 ```
-With reduced motion the hero curve must render complete and correct on first paint, not blank.
 
----
+`animation-timeline: auto` is the part people forget. Without it a
+reduced-motion user can be left with an element frozen in its scroll-driven
+start state, which means invisible. The reset list also names every element
+that carries a hidden start state, not just `.reveal`.
+
+Text is present in the DOM and readable at all times, never `opacity: 0` with
+no fallback. Mask reveals keep the text in flow, which is why they are
+preferred over anything that removes it. Nothing animates on the focus ring
+itself. Nothing flashes more than three times per second.
 
 ## 8. THE HERO PLOT
 

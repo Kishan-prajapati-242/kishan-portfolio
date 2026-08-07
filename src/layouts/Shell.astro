@@ -17,9 +17,11 @@ const { title, description, ogType, jsonLdPerson } = Astro.props;
 <Base title={title} description={description} ogType={ogType} jsonLdPerson={jsonLdPerson}>
   <div class="shell">
     <div class="shell-grid">
-      <div class="shell-side">
-        {Astro.slots.has('side') ? <slot name="side" /> : <ProfileCard />}
-      </div>
+      {Astro.slots.has('side') ? (
+        <div class="shell-side"><slot name="side" /></div>
+      ) : (
+        <div class="shell-side" transition:persist="profile"><ProfileCard /></div>
+      )}
       <div class="shell-main">
         <slot />
       </div>

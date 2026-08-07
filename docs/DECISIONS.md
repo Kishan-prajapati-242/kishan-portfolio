@@ -227,3 +227,12 @@ Three of these numbers were reassigned. Where a number appears twice, the entry 
 - D-069: "About 10 milliseconds" is kept as the plain-English rendering of the 9.9 ms end-to-end median. It is explicitly approximate, and the exact figure with its conditions still sits in the Sieve case study.
 - D-070: Measurement blocks came off the `/work` cards. Their labels and provenance carry the barred vocabulary, and the same numbers are on the case studies where that vocabulary belongs.
 - D-071: The Sieve stack order changed so the first four entries, which are the only ones that become chips, are names a recruiter recognises. The full stack still renders on the case study.
+
+## Motion system
+
+- D-072: Scroll reveals use CSS scroll-driven animations on `animation-timeline: view()`. No IntersectionObserver, no library, no added client JavaScript. The hidden start state lives inside the `@supports` guard, so an unsupported browser gets visible static content rather than blank space.
+- D-073: `vite.build.cssMinify` is pinned to `esbuild`. Lightning CSS folds `animation-timeline` into the `animation` shorthand, emitting `animation: linear both reveal-up view()`. That is valid CSS Animations Level 2 and no browser implements it, so the declaration is dropped, `animation-name` computes to `none`, and every reveal freezes in its start state. It fails silently and only in the production build.
+- D-074: Stagger on a scroll timeline is an `animation-range` offset, not a delay. A scroll timeline has no time axis, so `animation-delay` is meaningless there. Siblings step 5 percent of entry apart, five deep, then the cycle resets.
+- D-075: The last-screen selector is `.section:last-of-type` plus `.shell-main > :last-child`. The obvious `main > :last-child` matches the shell wrapper and silently applies the last-screen range to every card and row on the page.
+- D-076: `ClientRouter` added with `fallback="animate"`, fade at 240ms. The theme toggle, mobile nav and case study rail rebind on `astro:page-load` behind a `data-bound` guard, the theme class is reapplied on `astro:after-swap` to prevent a flash, and the profile sidebar carries `transition:persist` so it does not replay its entry animation on every navigation.
+- D-077: Stat figures reveal with a `clip-path` wipe rather than counting up. Counting needs JavaScript, screen readers read the intermediate values, and it is a cliche.

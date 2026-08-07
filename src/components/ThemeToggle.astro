@@ -16,14 +16,21 @@
 </button>
 
 <script>
-  const button = document.getElementById('theme-toggle');
-  button?.addEventListener('click', () => {
-    const dark = document.documentElement.classList.toggle('dark');
-    try {
-      localStorage.setItem('theme', dark ? 'dark' : 'light');
-    } catch {
-      /* storage unavailable: the theme still switches for this page view */
-    }
+  // astro:page-load fires on the initial load and after every client-side
+  // navigation. Binding on DOMContentLoaded alone would leave the toggle dead
+  // after the first page change.
+  document.addEventListener('astro:page-load', () => {
+    const button = document.getElementById('theme-toggle');
+    if (!button || button.dataset.bound === 'true') return;
+    button.dataset.bound = 'true';
+    button.addEventListener('click', () => {
+      const dark = document.documentElement.classList.toggle('dark');
+      try {
+        localStorage.setItem('theme', dark ? 'dark' : 'light');
+      } catch {
+        /* storage unavailable: the theme still switches for this page view */
+      }
+    });
   });
 </script>
 
