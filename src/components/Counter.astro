@@ -1,0 +1,44 @@
+---
+// Segmented counter. Splits any integer into comma groups and counts each
+// group on its own registered property, so the comma is real text and never
+// disappears mid-flight.
+//
+// The leading group uses plain decimal. Every following group uses the pad3
+// counter style, so 853 reads 000 through 853 rather than 5 then 53, and the
+// whole figure is never malformed at any frame.
+//
+// --n carries the target in the inline style and the keyframe animates *from*
+// zero. That way disabling the animation, which is what reduced motion and the
+// no-support fallback both do, leaves the final value in place with no extra
+// rules.
+export interface Props {
+  value: number;
+  spoken: string;
+  suffix?: string;
+  delay?: number;
+}
+
+const { value, spoken, suffix = '', delay = 0 }: Props = Astro.props;
+
+const groups = value.toLocaleString('en-US').split(',');
+const targets = groups.map((g) => Number.parseInt(g, 10));
+const keyframes = [...new Set(targets)]
+  .map((t) => `@keyframes cnt-${t}{from{--n:0}}`)
+  .join('');
+---
+<span class="counter">
+  <span class="sr-only">{spoken}</span>
+  <span class="counter-groups" aria-hidden="true">
+    {targets.map((t, i) => (
+      <>
+        {i > 0 && <span class="counter-comma">,</span>}
+        <span
+          class:list={['counter-group', i === 0 ? 'is-lead' : 'is-pad']}
+          style={`--n:${t};animation-name:cnt-${t};animation-delay:${delay}ms`}
+        ></span>
+      </>
+    ))}
+    {suffix && <span class="counter-suffix">{suffix}</span>}
+  </span>
+</span>
+<style is:inline set:html={keyframes}></style>

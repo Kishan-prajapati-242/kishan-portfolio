@@ -625,38 +625,39 @@
 @keyframes wipe-up { to { clip-path: inset(0 0 0 0); } }
 @keyframes progress-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
-/* Counting figures, pure CSS. @property makes --num animatable as an integer;
-   counter() then renders it. The real value is in the DOM as visually hidden
-   text and the counting element is aria-hidden, because pseudo-element content
-   is announced unreliably and nobody should hear the intermediate values. */
-@property --num {
+/* Counting figures, pure CSS. Counter.astro splits a value into comma groups.
+   @counter-style pad3 keeps every non-leading group three digits wide, so the
+   figure is never malformed mid-count: 182,853 reads 000,000 through 182,853
+   and never 182,5. */
+@property --n {
   syntax: '<integer>';
   initial-value: 0;
   inherits: false;
 }
 
-@supports (counter-set: x 1) {
-  .stat-figure {
-    counter-reset: num var(--num);
-  }
-
-  .stat-figure::after {
-    content: counter(num);
-  }
-
-  .stat-figure[data-target='200'] { animation: count-200 var(--dur-slow) var(--ease-out-quart) 560ms both; }
-  .stat-figure[data-target='4'] { animation: count-4 var(--dur-slow) var(--ease-out-quart) 690ms both; }
-
-  /* One keyframe block per stat. Animating to var(--target) inside keyframes
-     is not reliable across engines, so the target is literal. */
-  @keyframes count-200 { to { --num: 200; } }
-  @keyframes count-4 { to { --num: 4; } }
+@counter-style pad3 {
+  system: extends decimal;
+  pad: 3 "0";
 }
 
-@media (prefers-reduced-motion: reduce) {
-  @supports (counter-set: x 1) {
-    .stat-figure[data-target='200'] { --num: 200; animation: none !important; }
-    .stat-figure[data-target='4'] { --num: 4; animation: none !important; }
+.counter-groups {
+  font-variant-numeric: tabular-nums;
+}
+
+@supports (counter-set: x 1) {
+  .counter-group {
+    counter-reset: n var(--n);
+    animation-duration: var(--dur-slow);
+    animation-timing-function: var(--ease-out-quart);
+    animation-fill-mode: both;
+  }
+
+  .counter-group.is-lead::after {
+    content: counter(n);
+  }
+
+  .counter-group.is-pad::after {
+    content: counter(n, pad3);
   }
 }
 
@@ -968,7 +969,171 @@ button:active {
   }
 
   .site-header,
-  .home-link {
+  .home-link,
+  .counter-group,
+  .marquee-track {
     animation: none !important;
+  }
+}
+
+/* ---- Pass two additions --------------------------------------------------
+   3 shimmer, 4 word illumination, 6 spotlight, 7 exit depth.
+   Techniques 1, 2, 5 and the rest are above. */
+
+@property --shimmer {
+  syntax: '<percentage>';
+  initial-value: -20%;
+  inherits: false;
+}
+
+/* 4. Word illumination, hero lede only. One instance on the site; a second
+   makes it a gimmick. Time clock, because the lede is above the fold where a
+   view() timeline completes before it can be seen. */
+.illuminate .word {
+  color: var(--color-ink-3);
+  animation: illuminate var(--dur-base) var(--ease-out-quart) both;
+}
+
+@keyframes illuminate {
+  to {
+    color: var(--color-ink-2);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  /* 3. Text shimmer, the h1 only, driven by scroll. background-clip: text on
+     the mask inner span, so the sweep travels the whole two-line heading. */
+  .display .line-in {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-ink) calc(var(--shimmer) - 12%),
+      color-mix(in oklab, var(--color-plot) 55%, var(--color-ink)) var(--shimmer),
+      var(--color-ink) calc(var(--shimmer) + 12%)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation-name: line-up, shimmer;
+    animation-timeline: view(), scroll(root block);
+    animation-range: entry 15% entry 85%, 0% 100%;
+  }
+
+  /* The ghosted second line keeps its own colour; only the solid line sweeps. */
+  .display .ghost .line-in {
+    background-image: none;
+    color: color-mix(in oklab, var(--color-ink) 18%, var(--color-paper));
+  }
+
+  @keyframes shimmer {
+    to {
+      --shimmer: 120%;
+    }
+  }
+
+  /* 7. Section exit depth. Gives the page depth on the way up as well as
+     down, which is where most scroll animation forgets to work. */
+  .section {
+    animation: exit-depth linear both;
+    animation-timeline: view();
+    animation-range: exit 0% exit 100%;
+  }
+
+  @keyframes exit-depth {
+    to {
+      opacity: 0.7;
+      transform: scale(0.985);
+    }
+  }
+}
+
+/* 6. Spotlight. --mx and --my are written by a rAF-throttled pointermove
+   listener; with no JavaScript the layer simply never becomes visible. */
+.project-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.project-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    var(--color-plot-soft),
+    transparent 70%
+  );
+  transition: opacity var(--dur-fast) var(--ease-out-quart);
+}
+
+.project-card:hover::before,
+.project-card:focus-within::before {
+  opacity: 1;
+}
+
+/* 5. Border beam, the Sieve card only. One instance, pointing at the thing
+   most worth reading. */
+.beam {
+  position: relative;
+}
+
+.beam::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--beam-angle, 0deg),
+    transparent 0%,
+    transparent 82%,
+    var(--color-plot) 92%,
+    transparent 100%
+  );
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  animation: beam 4s linear infinite;
+}
+
+@property --beam-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes beam {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .illuminate .word {
+    color: var(--color-ink-2) !important;
+    animation: none !important;
+  }
+
+  .display .line-in {
+    background-image: none !important;
+    color: var(--color-ink) !important;
+  }
+
+  .section {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .beam::after {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .project-card::before {
+    display: none;
   }
 }

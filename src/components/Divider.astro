@@ -1,5 +1,52 @@
 ---
-// Section divider, DESIGN.md section 4: an error-bar bracket.
-// Decorative only, so it is hidden from assistive tech.
+// Section divider, DESIGN.md section 4: an error-bar bracket, not a plain hr.
+// A 1px rule with 8px end caps at both ends.
+//
+// Drawn left to right on a scroll timeline via stroke-dasharray. This reuses a
+// device already in the design rather than introducing a new one. Decorative,
+// so it is hidden from assistive tech.
 ---
-<div class="divider" aria-hidden="true"></div>
+<div class="divider" aria-hidden="true">
+  <svg width="100%" height="9" preserveAspectRatio="none" shape-rendering="crispEdges">
+    <path class="divider-path" d="M0.5 0.5 V8.5 M0.5 4.5 H100% M-0.5 0.5 V8.5" pathLength="1" fill="none" />
+  </svg>
+</div>
+
+<style>
+  .divider {
+    margin-block: 4rem;
+  }
+
+  .divider svg {
+    display: block;
+    overflow: visible;
+  }
+
+  .divider-path {
+    stroke: var(--color-grid);
+    stroke-width: 1;
+  }
+
+  @supports (animation-timeline: view()) {
+    .divider-path {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: draw-divider linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 70%;
+    }
+
+    @keyframes draw-divider {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .divider-path {
+      stroke-dashoffset: 0 !important;
+      animation: none !important;
+    }
+  }
+</style>

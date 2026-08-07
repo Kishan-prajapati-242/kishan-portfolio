@@ -1,0 +1,108 @@
+---
+// Two rows of marks scrolling in opposite directions. Home page only; /about
+// keeps the grouped grid, which is the reference version.
+//
+// The marks are decorative here because /about carries the real, readable
+// list, so the whole thing is aria-hidden and contributes nothing to the
+// accessible page.
+//
+// WCAG 2.2.2 applies to anything moving for more than five seconds: this
+// pauses on :hover and on :focus-within, and is fully static under
+// prefers-reduced-motion.
+import { ICONS } from '../data/icons';
+
+const all = Object.entries(ICONS);
+const mid = Math.ceil(all.length / 2);
+const rows = [all.slice(0, mid), all.slice(mid)];
+---
+<div class="marquee" aria-hidden="true">
+  {rows.map((row, i) => (
+    <div class="marquee-row">
+      {/* The set is duplicated so translateX(-50%) lands exactly on a repeat. */}
+      <div class:list={['marquee-track', i === 1 && 'is-reverse']}>
+        {[...row, ...row].map(([label, icon]) => (
+          <span class="marquee-item">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d={icon.d} />
+            </svg>
+            <span>{label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .marquee {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* Icons fade at the edges rather than clipping. */
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .marquee-row {
+    overflow: hidden;
+  }
+
+  .marquee-track {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    width: max-content;
+    animation: marquee-left 40s linear infinite;
+  }
+
+  .marquee-track.is-reverse {
+    animation-name: marquee-right;
+  }
+
+  @keyframes marquee-left {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes marquee-right {
+    from {
+      transform: translateX(-50%);
+    }
+    to {
+      transform: none;
+    }
+  }
+
+  /* WCAG 2.2.2: the user must be able to stop it. */
+  .marquee:hover .marquee-track,
+  .marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+  }
+
+  .marquee-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+    font-size: 1rem;
+    color: var(--color-ink-2);
+    white-space: nowrap;
+  }
+
+  .marquee-item svg {
+    flex: none;
+    color: var(--color-ink-3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+      animation: none !important;
+      transform: none !important;
+    }
+
+    .marquee-row {
+      overflow-x: auto;
+    }
+  }
+</style>

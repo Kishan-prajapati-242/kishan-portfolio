@@ -252,3 +252,14 @@ Three of these numbers were reassigned. Where a number appears twice, the entry 
 - D-085: The paths are vendored into `src/data/icons.ts` by `scripts/fetch-icons.mjs` rather than fetched during `astro build`. Pinning them keeps builds reproducible and offline-capable, and keeps CI from depending on jsdelivr. `@latest` would otherwise let a mark change silently between two builds of the same commit. Re-run the script to refresh.
 - D-086: Licence recorded as CC0-1.0, read from the simple-icons package manifest rather than assumed. Version pinned at 16.28.0 in a comment.
 - D-087: SQL has no mark in the set and renders as a text chip. No generic mark is substituted for a missing icon: a wrong-looking mark is worse than an honest word.
+
+## Animation pass two
+
+- D-088: 182,853 counts after all, via segmented counters. `Counter.astro` splits any integer into comma groups, the leading group uses decimal and the rest use a pad3 counter style, so the figure is never malformed mid-count and the comma is real text. Supersedes D-082.
+- D-089: The counter target lives in the inline style and the keyframe animates from zero, so disabling the animation leaves the final value in place. Reduced motion and the no-support fallback both need no extra rules.
+- D-090: The home stats became four cells: 182,853 papers, 200+ students, 400+ LeetCode, 4 papers. All four are in CONTENT.md sections 2 and 9. The $0 infrastructure figure moves out of the stat row and stays in the Sieve case study.
+- D-091: The skills marquee is home only and `aria-hidden`, because `/about` carries the real readable list. It pauses on hover and focus per WCAG 2.2.2 and is static under reduced motion.
+- D-092: The hero lede illumination and the stat counters run on the time clock, not a scroll timeline. Both sit above the fold, where a `view()` timeline completes before the user can see it move.
+- D-093: The spotlight costs 170 bytes gzipped, against a budget of 8 KB. Worst page total is 6,394 bytes gzipped.
+- D-094: `Divider.astro` is reinstated as an inline SVG with a path draw. The error-bar bracket is in DESIGN.md section 4 but had been dropped from every page during the layout rebuild, so item 9 had no target until it was restored.
+- D-095: The rejection list is recorded in DESIGN.md section 7 with the test behind it, so the reasoning survives rather than just the verdicts.

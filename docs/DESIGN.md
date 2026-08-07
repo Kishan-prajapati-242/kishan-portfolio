@@ -471,6 +471,58 @@ while someone is reading a number is irritating. Case study prose and the notes
 body get no reveal at all, because paragraph-by-paragraph fade-in on a page
 someone is actually reading is hostile.
 
+### Pass two, nine additions
+
+| # | addition | scope | notes |
+|---|---|---|---|
+| 1 | skills marquee | home only | two rows, opposite directions, 40s. `/about` keeps the grouped grid: marquee for impression, grid for reference. Pauses on `:hover` and `:focus-within` per WCAG 2.2.2, static under reduced motion, `aria-hidden` because `/about` carries the real list |
+| 2 | browser mockup frame | every project card | pure CSS chrome, three 8px dots, 6px frame. A raw screenshot reads as a screenshot; framed it reads as a product |
+| 3 | text shimmer | the `h1` only | `@property` gradient position, `background-clip: text`, on `scroll(root block)` |
+| 4 | word illumination | hero lede only | per-word spans split in markup. Used exactly once; a second instance makes it a gimmick |
+| 5 | border beam | the Sieve card only | conic gradient in a masked pseudo-element, 4s linear |
+| 6 | spotlight hover | project cards | rAF-throttled `pointermove` writing `--mx` and `--my`. **170 bytes gzipped** |
+| 7 | section exit depth | every section | `exit 0% exit 100%`, scale 0.985 and 0.7 opacity. Gives the page depth on the way up as well as down |
+| 8 | stat cell lift | the four stat cells | 1px inner highlight plus the 2px lift, so they read as objects rather than table cells |
+| 9 | divider path draw | section dividers | `stroke-dasharray` on a `view()` timeline. Reuses the error-bar bracket already in section 4 rather than adding a device |
+
+Two of these run on the **time** clock rather than a scroll timeline, for the
+reason in the two-clock rule: the hero lede and the stat counters are above the
+fold, where a `view()` timeline completes before the user can see it move.
+
+### Counting figures, segmented
+
+`Counter.astro` splits any integer into comma groups and counts each group on
+its own registered property, so the comma is real text and never disappears.
+The leading group uses plain `decimal`; every following group uses:
+
+```css
+@counter-style pad3 { system: extends decimal; pad: 3 "0"; }
+```
+
+so 182,853 reads `000,000` through `182,853` and never `182,5`. Verified
+mid-count: `182,852` / `199+` / `391+` / `4`.
+
+`--n` carries the target in the inline style and the keyframe animates *from*
+zero, so disabling the animation, which is what both reduced motion and the
+no-support fallback do, leaves the final value in place with no extra rules.
+
+Accessibility unchanged: the counting spans are `aria-hidden` and the real
+value sits beside them as visually hidden text.
+
+### Rejected, do not implement
+
+Typing effects, word-rotate, flip-text, morphing text, text scramble, glitch,
+pixelation, particles, meteors, starfields, globes, Three.js or WebGL,
+cursor followers, magnetic hover, tilt-on-hover, confetti, orbiting circles,
+animated beams between elements, retro-grid or dot-pattern backgrounds,
+scrollytelling pinned scenes, gooey SVG filter morphs, scroll-driven rotation,
+image-sequence scrubbing, and marquees of anything other than the skills icons.
+
+The test, so the same judgement can be applied to anything not listed: a
+technique is out if it is cliché, hurts screen readers, is heavy, is
+off-palette, or reads as junior on a portfolio whose selling point is
+engineering judgement. Failing any one of those is enough.
+
 ### Scroll progress
 
 A 2px bar fixed to the top of the viewport in `--color-plot`, `scaleX` 0 to 1

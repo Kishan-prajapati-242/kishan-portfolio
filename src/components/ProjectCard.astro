@@ -57,13 +57,18 @@ const highlights: Record<
 
 const highlight = showMeasurement ? highlights[entry.id] : undefined;
 ---
-<Card class={featured ? 'project-card project-card-featured' : 'project-card'}>
+<Card class:list={['project-card', featured && 'project-card-featured', entry.id === 'sieve' && 'beam']}>
   <a class="art" href={`/work/${entry.id}`} tabindex="-1" aria-hidden="true">
-    {art ? (
-      <Image src={art} alt={cardArtAlt ?? ''} width={800} height={450} loading="lazy" />
-    ) : (
-      <span class="art-empty"></span>
-    )}
+    <span class="chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </span>
+    <span class="screen">
+      {art ? (
+        <Image src={art} alt={cardArtAlt ?? ''} width={800} height={450} loading="lazy" />
+      ) : (
+        <span class="art-empty"></span>
+      )}
+    </span>
   </a>
 
   <p class="meta">
@@ -101,6 +106,28 @@ const highlight = showMeasurement ? highlights[entry.id] : undefined;
   </p>
 </Card>
 
+<script>
+  // Spotlight. Writes --mx and --my on the hovered card, throttled to one
+  // write per frame. With no JavaScript the layer never becomes visible, so
+  // nothing depends on this running.
+  document.addEventListener('astro:page-load', () => {
+    for (const card of document.querySelectorAll<HTMLElement>('.project-card')) {
+      if (card.dataset.spot === 'on') continue;
+      card.dataset.spot = 'on';
+      let frame = 0;
+      card.addEventListener('pointermove', (e) => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const r = card.getBoundingClientRect();
+          card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+          card.style.setProperty('--my', `${e.clientY - r.top}px`);
+        });
+      });
+    }
+  });
+</script>
+
 <style>
   .project-card {
     display: flex;
@@ -110,13 +137,34 @@ const highlight = showMeasurement ? highlights[entry.id] : undefined;
   /* The art runs to the card edges, so the negative margin cancels the card's
      24px padding. The slot holds its 16:9 shape whether or not a file exists,
      so a card without art reads as deliberate rather than broken. */
+  /* A raw screenshot reads as a screenshot. Framed, it reads as a product. */
   .art {
     display: block;
     line-height: 0;
-    margin: -24px -24px 20px;
-    border-bottom: 1px solid var(--color-grid);
-    border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0 0;
+    margin: 0 0 20px;
+    border: 1px solid var(--color-grid);
+    border-radius: 6px;
     overflow: hidden;
+  }
+
+  .chrome {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background-color: var(--color-paper-2);
+    border-bottom: 1px solid var(--color-grid);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-grid);
+  }
+
+  .screen {
+    display: block;
   }
 
   .art :global(img),
