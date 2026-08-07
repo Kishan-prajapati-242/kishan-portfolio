@@ -1,0 +1,244 @@
+---
+title: Sieve
+subtitle: Literature search and triage over 182,853 papers, on a fanless laptop, for nothing
+order: 1
+timeline: July 2026, roughly 8 working days of active development
+team: solo
+status: shipped
+repoPrivate: true
+hardware: M1 MacBook Air, 8 GB RAM, fanless, no GPU
+cardArtAlt: Abstract screenprint of a dense field of small rectangles with one narrow vertical channel selected and several rectangles rendered as hollow outlines.
+summary: Hybrid retrieval and deduplication over 182,853 papers on an 8 GB fanless laptop, at no infrastructure cost. Postgres with pgvector and HNSW, and bge-small embeddings on CPU.
+stack:
+  - Python 3.12
+  - FastAPI
+  - PostgreSQL 16
+  - pgvector
+  - ONNX Runtime
+  - React 18
+  - TypeScript
+  - Docker Compose
+---
+
+import Caveat from '../../components/Caveat.astro';
+import DataTable from '../../components/DataTable.astro';
+import Measurement from '../../components/Measurement.astro';
+
+export const corpus = [
+  ['papers live after dedup', '182,853'],
+  ['papers ingested before dedup', '196,988 (196,893 OpenAlex, 95 arXiv)'],
+  ['raw source records retained', '199,382'],
+  ['distinct DOIs', '181,635'],
+  ['papers with no DOI', '15,258 (7.7 percent)'],
+  ['retracted papers flagged and kept', '173'],
+  ['junk record types excluded at ingest', '1,499 across 6 OpenAlex types'],
+  ['specialty domain share', '62.2 percent against a 25 percent target floor'],
+  ['published 2017 or later', '90.3 percent, with a deliberate pre-2017 classics tail'],
+  ['database size', '2.25 GB'],
+  ['HNSW index size', '211 MB'],
+  ['tests passing', '118 (106 backend, 12 frontend)'],
+  ['design decision records', '9'],
+  ['commits', '40+'],
+];
+
+export const latency = [
+  ['bm25 keyword', '1.9 ms', '24.8 ms', 'no embed step', 'no embed step'],
+  ['vector, HNSW', '2.3 ms', '3.5 ms', '9.9 ms', '16.2 ms'],
+  ['hybrid, RRF', '6.3 ms', '26.7 ms', '13.7 ms', '31.0 ms'],
+];
+
+export const cost = [
+  ['works per credit, topic filters', '193'],
+  ['works per credit, phrase search', '8'],
+  ['efficiency gap', '24x'],
+  ['actual cost of the 200K corpus', "1,435 credits, 14 percent of one day's free allowance"],
+  ['requests', '1,040'],
+  ['estimated cost under the original query design', '~6,600 credits'],
+  ['cost reduction from the migration', '4.6x'],
+  ['wall clock for the full pull', '24 minutes'],
+];
+
+export const tokens = [
+  ['title only', '16', '30', '0.0 percent', '0.0 percent'],
+  ['abstract only', '227', '511', '39.6 percent', '5.0 percent'],
+  ['title plus abstract', '243', '533', '45.3 percent', '5.6 percent'],
+  ['title twice plus abstract', '259', '556', '51.0 percent', '6.4 percent'],
+];
+
+export const dedup = [
+  ['papers merged away', '14,135 (7.2 percent of corpus)'],
+  ['merge decisions recorded', '13,567'],
+  ['rollback snapshots', '12,909, one per merge that deleted a row, round trip verified byte-identical'],
+  ['groups flagged for human review rather than merged', '57 groups, 889 papers'],
+];
+
+export const strategies = [
+  ['abstract_hash, gated on title similarity', '7,673'],
+  ['title_exact plus same year', '3,945'],
+  ['preprint_trgm, surname blocking, plus or minus 1 year', '1,523'],
+  ['jmir_doi, mechanical DOI identity', '536'],
+  ['title_trgm', '458'],
+];
+
+export const recoveries = [
+  ['venue null rate', '8,295', '471', '94 percent'],
+  ['ACL Anthology venue nulls', '3,154', '24', '99.2 percent'],
+];
+
+## Why it exists
+
+I hand-screened over 200 papers for the literature review that became our CML 2025 chapter. Sieve is the tool I wanted while doing that. The first real query I ran against the finished retrieval layer, "clinical text simplification", returned the same paper three times in the top 20. That became the recorded baseline for the deduplication work. It now returns no redundant copies.
+
+## Stack
+
+Python 3.12, FastAPI, Uvicorn, Pydantic v2, psycopg 3, raw SQL on every search path with no ORM. PostgreSQL 16 with pgvector, HNSW and halfvec, pg_trgm, tsvector plus GIN full text, JSONB, generated columns, forward-only migrations, connection pooling. Embeddings from bge-small-en-v1.5, 33M parameters, 384 dimensions, ONNX Runtime, CPU only, 512 token window. React 18, Vite, TypeScript, Tailwind, TanStack Query. Docker Compose for the whole stack with no host dependencies, Podman on macOS. pytest, ruff, mypy, GitHub Actions CI.
+
+Hardware: M1 MacBook Air, 8 GB RAM, fanless, no GPU.
+
+## The corpus
+
+<DataTable
+  card
+  caption="Corpus composition"
+  columns={['metric', 'value']}
+  rows={corpus}
+/>
+
+<Caveat>
+  Every latency and recall figure below was measured on the 196,893 paper
+  pre-deduplication corpus. The live corpus is 182,853 after dedup.
+  Re-measurement against the smaller corpus is pending, so the numbers here
+  describe a slightly larger index than the one running now.
+</Caveat>
+
+## Latency
+
+All measured through a custom benchmark harness with stated timing windows, discarded warmup, and a percentile guard.
+
+<DataTable
+  card
+  caption="Latency by search mode"
+  columns={['mode', 'SQL p50', 'SQL p95', 'end-to-end p50', 'end-to-end p95']}
+  rows={latency}
+/>
+
+Component decomposition of the vector path, p50: query embedding 7.6 ms, HNSW SQL at k=10 2.3 ms, end-to-end 9.9 ms.
+
+The exact sequential scan baseline is the denominator for every speedup claim on this page. Warm cache p50 is 55 to 58.8 ms and warm p95 is 71 to 83 ms. Cold cache median is 1,126 ms over a range of 1,039 to 1,456, a 20x cold to warm gap that is measured separately and never blended. 600 samples: 120 distinct queries, 5 interleaved repetitions, 3 warmup scans discarded. Cold cache was forced by restarting Postgres and dropping the VM page cache, orchestrated from the host.
+
+<Measurement
+  label="p99 latency"
+  state="unmeasured"
+  reason="Not point-estimable on this hardware. Across runs it ranged 83.8 to 406.9 ms, a 4.9x spread. The harness gives a median across runs only when max divided by min is within 1.3, and otherwise returns null with the observed range. This is that case."
+/>
+
+## Cost engineering
+
+OpenAlex moved to a metered API in February 2026. The free tier is $1 per day with a key and $0.01 per day without. `list` operations bill 1 credit and `search` operations bill 10.
+
+<DataTable
+  card
+  caption="Ingestion cost against the metered OpenAlex API"
+  columns={['metric', 'value']}
+  rows={cost}
+/>
+
+Also found: OpenAlex deprecated `/concepts` in favour of `/topics`, so the original query design had been built on a frozen taxonomy.
+
+## The tokenizer study
+
+Run across the entire corpus with the real WordPiece tokenizer.
+
+<DataTable
+  card
+  caption="Token length by input variant"
+  columns={['input variant', 'median', 'p95', 'over 256 tokens', 'over 512 tokens']}
+  rows={tokens}
+/>
+
+I then decoded the truncation tails on real examples. In every case the discarded text was the Results and Conclusions section, because structured abstracts put the payoff last. That disqualified all-MiniLM-L6-v2, which truncates at 256 tokens, in favour of bge-small-en-v1.5, natively trained at 512, roughly 10 points better on MTEB BEIR retrieval, and identical at 384 dimensions so the schema did not change.
+
+## The embedding pipeline
+
+182,853 papers embedded, 100 percent coverage, stored as `halfvec(384)` in fp16 at 768 bytes per row. Measured throughput was 13.2 docs per second in-container, fp32, length-sorted. Projected wall clock was 248 minutes and the actual run took over 10 hours, a 2.4x miss caused by thermal throttling on fanless hardware. Peak RSS during encode was 2.05 GB. The boilerplate re-encode handled 3,847 papers title-only in 41 seconds, 94 docs per second, against a blocklist of 932 abstract hashes.
+
+## The vector index
+
+HNSW at m=16 and ef_construction=64. Build time was 36 seconds for 196,893 halfvec(384) rows, parallel across 2 workers. `maintenance_work_mem` needed 1 GB, and the 64 MB default would have silently taken the spill path. `/dev/shm` needed 2 GB, and Docker's 64 MB default killed the build instantly.
+
+Recall plateaus in the 0.989 to 0.990 range by ef=640. The limit is the m and ef_construction build parameters, not search depth.
+
+## Deduplication
+
+<DataTable
+  card
+  caption="Deduplication outcomes"
+  columns={['metric', 'value']}
+  rows={dedup}
+/>
+
+<DataTable
+  card
+  caption="Papers removed by strategy"
+  columns={['strategy', 'papers removed']}
+  rows={strategies}
+/>
+
+86 percent of merges came from exact and mechanical keys and 14 percent from fuzzy matching. That is the correct shape for a cascade where under-merging is the safer error.
+
+<Measurement
+  label="deduplication precision"
+  state="unmeasured"
+  reason="Not measured. 14,135 papers merged, 13,567 decisions recorded, 12,909 rollback snapshots verified byte-identical on round trip. Precision needs hand-labeling of 120 stratified pairs. I have not done it, so I do not have the number."
+/>
+
+## Data quality recoveries
+
+<DataTable
+  card
+  caption="Venue metadata recovery"
+  columns={['metric', 'before', 'after', 'recovery']}
+  rows={recoveries}
+/>
+
+Root cause: extraction read only `primary_location.source.display_name`, and ACL Anthology works have no linked Source entity at all. They carry the venue as free text in a field that was never fetched.
+
+## Adjacent-rank spacing
+
+The raw number is uninterpretable on its own: twin papers' embeddings differ by a median cosine distance of 0.0027. So instead I measured the median cosine distance between adjacent ranks inside a top-10 result set. That is 0.00213, with the rank 10 to 11 boundary at 0.00071. A stale vector therefore sits at 1.3x the adjacent-rank gap at the median and 43x at p90. It is large enough to reorder results, and at p90 it can push a paper out of the top 10 entirely. That reversed my starting assumption, which was that stale vectors were cosmetic.
+
+## What bm25 actually does
+
+Per-query SQL latency against bm25 match count gives Pearson r = 0.663 and Spearman 0.293. The Spearman is low because the median query matches exactly one document, so the correlation is entirely tail-driven, which is what a p95 floor looks like. The widest query matched 81,489 documents at 935.4 ms and the narrowest matched 0 at 12.8 ms. The cause is that the bm25 CTE ranks every match before applying LIMIT, so cost tracks match count rather than result count.
+
+**The AND-semantics cliff.** `to_tsquery` requires every term to appear in the same document, so bm25 returns zero rows for long natural-language queries. Measured example: "reducing the reading difficulty of health leaflets for people with low literacy" returns nothing. Two consequences: keyword mode has a failure class on exactly the phrasing users actually type, and hybrid silently degenerates to vector-only on those queries because RRF receives only one input.
+
+## Where each mode wins
+
+bm25 wins on `i2b2 2010 relation extraction challenge`. The exact identifier anchors it, while vector drifts to generic relation-extraction methods.
+
+Vector wins on `reducing the reading difficulty of health leaflets for people with low literacy`. bm25 returns zero rows on AND semantics, and vector's top 4 are all on topic.
+
+Hybrid beats both on `making medical documents easier to understand for patients`. Its top 3 is the union of bm25's unique find and vector's pair.
+
+On `clinical text simplification`, mutual agreement beat either ranker's individual confidence. A paper bm25 buried at rank 33 reached hybrid number 3 on the strength of vector rank 4.
+
+## Design decisions
+
+Python and FastAPI over Node and Express, because the embedding model is Python-native, so Node forces two services, a network hop, two deploy targets, and two dependency sets.
+
+Year-stratified corpus sampling over citation sort, because citation count is largely a proxy for age, so sorting by it excludes the recent work the eval queries target and makes BM25 look better than it is.
+
+Retracted papers kept and flagged rather than excluded, because a systematic reviewer needs to see a retracted paper in order to exclude it deliberately, and to check what cites it.
+
+Null the embedding at the write site rather than track a content hash, because a hash column creates a second invariant that every text-mutating path has to maintain, and forgetting it yields a stale vector the system believes is fresh.
+
+Reciprocal Rank Fusion over score addition, because BM25 returns an unbounded score whose scale depends on corpus and query length while cosine similarity has a different bounded distribution. RRF discards scores and keeps ranks, so it needs no per-query calibration.
+
+## Not built
+
+Dedup precision figure. PubMed client, though arXiv exists. Postgres SKIP LOCKED job queue, so ingestion is still synchronous. Collections and screening workflow. BibTeX export. Query caching. Keyset pagination. k6 load test and RPS ceiling. nDCG relevance evaluation. Prometheus metrics endpoint, though structured logging exists. Public deployment. Visual design pass.
+
+Deployment constraint: the database is 2.25 GB and free managed Postgres tiers cap at 0.5 GB. The plan on record is a 40 to 50K subset deployed publicly with the full corpus local.
+
+One outstanding commitment, recorded in my own notes and worth stating: one full understanding pass over the codebase, deferred by choice.

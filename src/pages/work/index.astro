@@ -1,0 +1,63 @@
+---
+import type { ImageMetadata } from 'astro';
+import { getCollection } from 'astro:content';
+
+import ProjectCard from '../../components/ProjectCard.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import Shell from '../../layouts/Shell.astro';
+
+// Card art is resolved by filename rather than through the schema's cardArt
+// field, so dropping a PNG into src/assets/work/ fills the slot with no other
+// change. The expected name is the entry id, for example sieve.png.
+const art = import.meta.glob<{ default: ImageMetadata }>(
+  '../../assets/work/*.{png,jpg,jpeg,webp}',
+  { eager: true }
+);
+const artFor = (id: string) => art[`../../assets/work/${id}.png`]?.default;
+
+const entries = (await getCollection('work', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+// CONTENT.md section 5. One line each, not inflated into case studies.
+const frontEnd = [
+  { name: 'parallax', href: 'https://github.com/Kishan-prajapati-242/parallax', detail: 'Scroll-driven 3D and parallax effects, plain HTML and CSS.' },
+  { name: 'image-gallery', href: 'https://github.com/Kishan-prajapati-242/image-gallery', detail: 'Responsive image gallery, HTML and CSS.' },
+  { name: 'ProductCard', href: 'https://github.com/Kishan-prajapati-242/ProductCard', detail: 'Product card component, HTML and CSS.' },
+  { name: 'Modern-Chair', href: 'https://github.com/Kishan-prajapati-242/Modern-Chair', detail: 'CSS layout and illustration exercise.' },
+];
+---
+<Shell
+  title="Work"
+  description="Retrieval and NLP systems I have built, with the measurements that describe them and the conditions those measurements were taken under."
+>
+  <SectionHeading as="h1" solid="Selected" ghost="Work" />
+  <p class="display-lede">
+    Five projects. Each one carries its own numbers and the conditions they were
+    measured under.
+  </p>
+
+  <div class="card-grid card-grid-2 section-body">
+    {entries.map((entry) => (
+      <ProjectCard entry={entry} art={artFor(entry.id)} headingLevel={2} />
+    ))}
+  </div>
+
+  <section class="section" aria-labelledby="front-end-heading">
+    <SectionHeading id="front-end-heading" solid="Earlier" ghost="Practice" />
+    <ul class="rows section-body">
+      {frontEnd.map((repo) => (
+        <li class="row">
+          <h3 class="row-title"><a href={repo.href}>{repo.name}</a></h3>
+          <p class="row-sub">{repo.detail}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+</Shell>
+
+<style>
+  .section-body {
+    margin-top: 2.5rem;
+  }
+</style>

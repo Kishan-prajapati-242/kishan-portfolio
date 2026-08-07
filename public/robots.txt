@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kishan-prajapati.vercel.app/sitemap-index.xml

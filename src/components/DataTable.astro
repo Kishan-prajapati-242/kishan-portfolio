@@ -1,0 +1,144 @@
+---
+// DESIGN.md section 4. Tables break the prose measure and never clip: the
+// wrapper scrolls horizontally instead. The scroll container is focusable
+// and labelled so a keyboard user can reach and scroll it.
+//
+// The scroll affordance is a text hint rather than a fade, because gradients
+// are banned site-wide by DESIGN.md section 2, and it is CSS only, because
+// the only JavaScript on this site is the theme toggle, the mobile nav, and
+// the case study rail.
+//
+// With `card`, the table sits in a container with its title in the label role
+// at the top, outside the scroll region so the title never scrolls away.
+
+export interface Props {
+  caption: string;
+  columns: string[];
+  rows: (string | number)[][];
+  bleed?: boolean;
+  card?: boolean;
+}
+
+const { caption, columns, rows, bleed = true, card = false } = Astro.props;
+
+const bad = rows.findIndex((row) => row.length !== columns.length);
+if (bad !== -1) {
+  throw new Error(
+    `<DataTable caption="${caption}"> row ${bad} has ${rows[bad].length} cells but there are ${columns.length} columns. Every row must match the header.`
+  );
+}
+---
+<figure class:list={['data-table', bleed && 'bleed', card && 'is-card']}>
+  <p class="table-title t-label">{caption}</p>
+  <div class="scroll-wrap" tabindex="0" role="region" aria-label={caption}>
+    <table>
+      <caption class="sr-only">{caption}</caption>
+      <thead>
+        <tr>{columns.map((c) => <th scope="col">{c}</th>)}</tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr>
+            {row.map((cell, i) =>
+              i === 0 ? <th scope="row">{cell}</th> : <td>{cell}</td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <p class="scroll-hint t-label">Scroll sideways for the full table</p>
+</figure>
+
+<style>
+  .data-table {
+    margin: 1.5rem 0;
+  }
+
+  .is-card {
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-panel);
+    background-color: var(--color-paper);
+    padding: 24px;
+    margin-block: 2rem;
+    transition: border-color 120ms;
+  }
+
+  .is-card:hover,
+  .is-card:focus-within {
+    border-color: var(--color-plot);
+  }
+
+  .table-title {
+    margin: 0 0 0.75rem;
+    color: var(--color-ink-3);
+  }
+
+  .scroll-wrap {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-3) var(--color-paper-2);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-small);
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-grid);
+    vertical-align: top;
+  }
+
+  thead th {
+    white-space: nowrap;
+  }
+
+  td {
+    min-width: 7ch;
+  }
+
+  .is-card tbody tr:last-child th,
+  .is-card tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  thead th {
+    background-color: var(--color-paper-2);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  tbody th {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--color-ink);
+    white-space: normal;
+  }
+
+  td {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink-2);
+  }
+
+  .scroll-hint {
+    display: none;
+    margin: 0.75rem 0 0;
+    color: var(--color-ink-3);
+  }
+
+  /* Shown only where the table is most likely to overflow, per DESIGN.md
+     section 4. Detecting real overflow would need JavaScript. */
+  @media (max-width: 719px) {
+    .scroll-hint {
+      display: block;
+    }
+  }
+</style>

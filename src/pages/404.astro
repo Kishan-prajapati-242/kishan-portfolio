@@ -1,0 +1,19 @@
+---
+// SPEC.md section 6, verbatim. No "Oops!" and no "Looks like you're lost".
+import SectionHeading from '../components/SectionHeading.astro';
+import Shell from '../layouts/Shell.astro';
+---
+<Shell title="404" description="No page at this path.">
+  <SectionHeading as="h1" solid="404" ghost="Not Found" />
+  <p class="measure">
+    No page at this path. The request was well formed and the answer does not
+    exist, which is a distinction I care about elsewhere on this site.
+  </p>
+  <p><a href="/">Back to home</a></p>
+</Shell>
+
+<style>
+  .code {
+    font-variant-numeric: tabular-nums;
+  }
+</style>

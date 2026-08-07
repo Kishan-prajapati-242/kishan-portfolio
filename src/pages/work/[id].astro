@@ -1,0 +1,18 @@
+---
+// Entries are addressed by id, not slug. slug was removed with the Content
+// Layer API, and rendering goes through render(entry) imported from
+// astro:content rather than entry.render().
+import { getCollection, render } from 'astro:content';
+import CaseStudy from '../../layouts/CaseStudy.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('work', ({ data }) => !data.draft);
+  return entries.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+---
+<CaseStudy entry={entry} headings={headings}>
+  <Content />
+</CaseStudy>

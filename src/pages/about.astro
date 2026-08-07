@@ -1,0 +1,162 @@
+---
+// CONTENT.md section 9. The work authorization line appears here and nowhere
+// else on the site. No diet, calorie tracking, banking, housing, or family.
+import Card from '../components/Card.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Shell from '../layouts/Shell.astro';
+---
+<Shell
+  title="About"
+  description="First-generation college student from Gujarat, now an MS Computer Science student at Northeastern. Education, earlier roles, and what I actually care about."
+>
+  <SectionHeading as="h1" solid="About" ghost="Me" />
+
+  <p class="display-lede">
+    First-generation college student from Gujarat, now doing a master's in
+    computer science in Boston. I care most about whether a number can be
+    trusted.
+  </p>
+
+  <section class="section" aria-labelledby="record-heading">
+    <SectionHeading id="record-heading" solid="The" ghost="Record" />
+  </section>
+
+  <div class="card-grid card-grid-2 section-body">
+    <Card>
+      <h3 class="card-heading">Education</h3>
+      <p class="card-body">
+        B.Tech in Information Technology and Engineering at P P Savani
+        University in Surat, October 2021 to May 2025, finishing at 8.32 out of
+        10 with First Class with Distinction, and highest grades in Design and
+        Analysis of Algorithms, Data Structures, Discrete Mathematics,
+        Artificial Intelligence, Machine Learning, and Natural Language
+        Processing.
+      </p>
+      <p class="card-body">
+        MS in Computer Science at Northeastern's Khoury College, started January
+        2026, currently at 3.7 out of 4.0, expecting to finish in May 2028.
+        Coursework so far: CS 5010 Programming Design Paradigm, CS 6120 Natural
+        Language Processing, and CS 5800 Algorithms.
+      </p>
+    </Card>
+
+    <Card>
+      <h3 class="card-heading">Work history</h3>
+      <p class="card-body">
+        Research assistant at P P Savani under Dr. Jayashri Patil, November 2023
+        to March 2025. MERN stack developer intern at Technonite in Surat,
+        December 2024 to March 2025.
+      </p>
+      <p class="card-body">
+        At Technonite: full-stack work in MongoDB, Express, React and Node
+        across e-commerce, logistics and healthcare clients. A reusable React
+        component library adopted across three projects, cutting duplication and
+        speeding delivery by roughly 25 percent. A real-time logistics dashboard
+        on Socket.io and the Google Maps API that improved dispatch tracking by
+        roughly 30 percent.
+      </p>
+      <p class="t-small estimates">
+        Both percentages are self-reported estimates from that internship, not
+        measured figures.
+      </p>
+    </Card>
+
+    <Card>
+      <h3 class="card-heading">Certifications</h3>
+      <p class="card-body">
+        AWS Fundamentals Specialization, Amazon Web Services, April 2024.
+        Building Web Applications in PHP, University of Michigan, April 2024.
+        Three GST courses from PwC India via Coursera, 2023.
+      </p>
+      <p class="card-body">
+        Over 400 LeetCode problems solved, working NeetCode 150 as the spine.
+      </p>
+    </Card>
+
+    <Card>
+      <h3 class="card-heading">Work authorization</h3>
+      <p class="card-body">
+        F-1 student, CPT eligible. Earliest internship or co-op start is January
+        2027. Primary target is Summer 2027.
+      </p>
+    </Card>
+  </div>
+
+  <section class="section" aria-labelledby="care-heading">
+    <SectionHeading id="care-heading" solid="What I" ghost="Care About" />
+    <p class="section-lede section-body">
+      Whether a number can be trusted. Most of my worst bugs were not crashes.
+      They were measurements that returned a plausible value under conditions
+      where returning a wrong value was the only thing they could have done.
+      That is why my benchmark harness refuses to answer rather than guess, and
+      why the <a href="/notes">notes page</a> exists.
+    </p>
+  </section>
+
+  <section class="section" aria-labelledby="interests-heading">
+    <SectionHeading id="interests-heading" solid="Outside" ghost="Coursework" />
+    <p class="section-lede section-body">
+      Photography and cinematic colour grading, mechanical keyboard building,
+      and a long-running interest in the philosophy of machine consciousness and
+      technological singularity, mostly through books rather than code.
+    </p>
+  </section>
+
+  <section class="section" aria-labelledby="reach-heading">
+    <SectionHeading id="reach-heading" solid="Reaching" ghost="Me" />
+    <ul class="links section-body">
+      <li><a href="mailto:prajapati.kish@northeastern.edu">prajapati.kish@northeastern.edu</a></li>
+      <li><a href="/kishan-prajapati-resume.pdf">Resume (PDF)</a></li>
+      <li><a href="https://github.com/Kishan-prajapati-242">GitHub</a></li>
+      <li><a href="https://www.linkedin.com/in/kishan-prajapati-617a00202">LinkedIn</a></li>
+      <li><a href="https://scholar.google.com/citations?user=AqL9YRcAAAAJ">Google Scholar</a></li>
+      <li><a href="https://leetcode.com/u/KishanSP242">LeetCode</a></li>
+    </ul>
+  </section>
+</Shell>
+
+<style>
+  .section-body {
+    margin-top: 2.5rem;
+  }
+
+  .opening {
+    color: var(--color-ink-2);
+    margin-bottom: 2.5rem;
+  }
+
+  .card-heading {
+    margin: 0 0 0.75rem;
+    font-size: var(--text-h2);
+  }
+
+  .card-body {
+    margin: 0 0 0.75rem;
+    color: var(--color-ink-2);
+  }
+
+  .card-body:last-child {
+    margin-bottom: 0;
+  }
+
+  .estimates {
+    color: var(--color-annot);
+    margin: 0;
+  }
+
+  .section-lede {
+    max-width: 60ch;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    color: var(--color-ink-2);
+  }
+
+  .links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+</style>

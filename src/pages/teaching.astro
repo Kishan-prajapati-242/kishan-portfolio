@@ -1,0 +1,135 @@
+---
+// CONTENT.md section 7. No student is named anywhere on this page.
+import Card from '../components/Card.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Shell from '../layouts/Shell.astro';
+
+const appointments = [
+  { course: 'CS 3000 Algorithms and Data', term: 'Summer A 2026', faculty: 'Laney Strange, Akshar Varma' },
+  { course: 'DS 3000 Foundations of Data Science', term: 'Summer B 2026', faculty: 'Xiaoyi Yang' },
+  { course: 'CS 1800 Discrete Structures', term: 'Fall 2026, incoming', faculty: 'Laney Strange, Akshar Varma' },
+];
+
+const sections = [
+  {
+    heading: 'Working with the grading team',
+    body: "Grading at this scale only works if every grader makes the same call on the same mistake. Most of my time on a new assignment goes into agreeing the rubric with the other TAs before anyone starts marking, so a student's score does not depend on which of us opened their submission. When we disagree we settle it on real submissions rather than in the abstract.",
+  },
+  {
+    heading: 'How I try to grade',
+    body: 'Generous by default, consistent above all. Reward the idea, go light on arithmetic slips. If one early mistake breaks everything downstream it should cost a student once, not five times. I write comments the way I would want one from a classmate rather than a correction from above, and I leave them blank when there is nothing to fix.',
+  },
+  {
+    heading: 'Office hours',
+    body: "Khoury uses a framework called GRASPING for graduated hints, which is a structured way of not simply handing over the answer. Most of the job is working out where someone's understanding actually stops, which is usually two steps earlier than they think.",
+  },
+  {
+    heading: 'Helping people scope',
+    body: 'A lot of the useful work happens before anyone writes code. I have sat with teams whose project proposals were not finishable in the time they had and helped them cut the idea down to something they could actually ship and be proud of. That conversation is worth more than any comment I could leave on a final submission.',
+  },
+];
+---
+<Shell
+  title="Teaching"
+  description="Graduate Teaching Assistant at Khoury College. Three consecutive appointments across three courses, and how I work with a grading team."
+>
+  <SectionHeading as="h1" solid="Teaching" ghost="At Khoury" />
+  <p class="display-lede">
+    Graduate Teaching Assistant at Khoury College since May 2026. Three
+    consecutive appointments, three courses, three different faculty, which
+    mostly means each team asked me back.
+  </p>
+
+  <section class="section" aria-labelledby="appts-heading">
+    <SectionHeading id="appts-heading" solid="Three" ghost="Appointments" />
+  </section>
+
+  <div class="card-grid card-grid-3 section-body">
+    {appointments.map((a) => (
+      <Card class="appointment">
+        <p class="t-label course-term">{a.term}</p>
+        <h3 class="course">{a.course}</h3>
+        <p class="t-small faculty">{a.faculty}</p>
+      </Card>
+    ))}
+  </div>
+
+  <p class="measure day-to-day">
+    Over 200 students so far, and over 300 once CS 1800 starts. Day to day it is
+    office hours, a weekly small-group session, grading homework and quizzes on
+    Gradescope, writing recitation material, and answering Piazza and Teams
+    threads.
+  </p>
+
+  <section class="section" aria-labelledby="how-heading">
+    <SectionHeading id="how-heading" solid="How I" ghost="Work" />
+  </section>
+
+  <div class="card-grid card-grid-2 section-body">
+    {sections.map((s) => (
+      <Card>
+        <h3 class="section-heading">{s.heading}</h3>
+        <p class="section-body">{s.body}</p>
+      </Card>
+    ))}
+  </div>
+
+  <section class="section" aria-labelledby="earlier-heading">
+    <SectionHeading id="earlier-heading" solid="Earlier" ghost="Teaching" />
+    <p class="t-label rolelabel section-body">
+      Competitive Programming Head, Google Developer Student Club, P P Savani
+      University. August 2022 to September 2023.
+    </p>
+    <p class="measure">
+      I ran the club's competitive programming track: over 15 contests and
+      hackathons with more than 1,000 participants across campuses, and weekly
+      sessions for around 50 students. The part I liked most was the hour after
+      each contest, going through the submissions that failed and working out
+      with people where the thinking went wrong. Organising it taught me more
+      about coordinating people than it did about algorithms.
+    </p>
+  </section>
+</Shell>
+
+<style>
+  .section-body {
+    margin-top: 2.5rem;
+  }
+
+  .course-term {
+    color: var(--color-ink-3);
+    margin: 0 0 0.5rem;
+  }
+
+  .course {
+    margin: 0 0 0.5rem;
+    font-size: var(--text-h3);
+    font-family: var(--font-sans);
+    font-weight: 600;
+  }
+
+  .faculty {
+    color: var(--color-ink-2);
+    margin: 0;
+  }
+
+  .day-to-day {
+    color: var(--color-ink-2);
+    margin-block: 2rem;
+  }
+
+  .section-heading {
+    margin: 0 0 0.75rem;
+    font-size: var(--text-h2);
+  }
+
+  .section-body {
+    margin: 0;
+    color: var(--color-ink-2);
+  }
+
+  .rolelabel {
+    color: var(--color-ink-3);
+    max-width: 68ch;
+  }
+</style>

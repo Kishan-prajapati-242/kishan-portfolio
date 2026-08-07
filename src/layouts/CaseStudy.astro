@@ -1,0 +1,270 @@
+---
+// Case study layout, SPEC.md section 2 and DESIGN.md section 4.
+// Two columns above 1024px: a 200px sticky rail holding the section index and
+// a persistent note giving the hardware the work was measured on. Below
+// 1024px it collapses to one column with the index as a details element.
+import type { CollectionEntry } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
+
+import ProfileCard from '../components/ProfileCard.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Shell from './Shell.astro';
+
+interface Props {
+  entry: CollectionEntry<'work'>;
+  headings: MarkdownHeading[];
+}
+
+const { entry, headings } = Astro.props;
+const { title, subtitle, timeline, team, status, repo, repoPrivate, demo, stack, hardware, summary } =
+  entry.data;
+
+const sections = headings.filter((h) => h.depth === 2);
+
+const meta = [
+  { term: 'Timeline', detail: timeline },
+  { term: 'Team', detail: team },
+  { term: 'Status', detail: status },
+  { term: 'Repo', detail: repo ? null : repoPrivate ? 'private, available on request' : null },
+];
+---
+<Shell title={title} description={summary} ogType="article">
+  <aside slot="side" class="rail" aria-label="Case study details">
+        {sections.length === 0 && <ProfileCard />}
+        {sections.length > 0 && (
+        <details class="rail-index" open>
+          <summary class="t-label">Sections</summary>
+          <nav aria-label="Sections">
+            <ol class="rail-list">
+              {sections.map((s) => (
+                <li>
+                  <a class="rail-link t-small" href={`#${s.slug}`} data-rail-link>{s.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </details>
+        )}
+
+        {hardware && (
+          <p class="rail-note">
+            <span class="t-label rail-note-tag">Measured on</span>
+            <span class="t-small">{hardware}</span>
+          </p>
+        )}
+  </aside>
+
+  <article class="case">
+    <SectionHeading as="h1" solid={title} />
+    <p class="display-lede">{subtitle}</p>
+
+    <div class="case-main">
+        <dl class="meta">
+          {meta
+            .filter((m) => m.detail)
+            .map((m) => (
+              <div class="meta-row">
+                <dt class="t-label">{m.term}</dt>
+                <dd class="t-small">{m.detail}</dd>
+              </div>
+            ))}
+          {repo && (
+            <div class="meta-row">
+              <dt class="t-label">Repo</dt>
+              <dd class="t-small"><a href={repo}>{repo.replace('https://', '')}</a></dd>
+            </div>
+          )}
+          {demo && (
+            <div class="meta-row">
+              <dt class="t-label">Demo</dt>
+              <dd class="t-small"><a href={demo}>Open the live demo</a></dd>
+            </div>
+          )}
+          <div class="meta-row">
+            <dt class="t-label">Stack</dt>
+            <dd class="t-small">{stack.join(', ')}</dd>
+          </div>
+        </dl>
+
+        <div class="prose">
+          <slot />
+        </div>
+    </div>
+  </article>
+</Shell>
+
+<script>
+  // Marks the rail entry for the section currently in view. This is the only
+  // JavaScript on a case study page and it is a few hundred bytes: no
+  // framework, no scroll library.
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-rail-link]'));
+  const headings = Array.from(document.querySelectorAll<HTMLElement>('.prose h2[id]'));
+
+  if (links.length && headings.length && 'IntersectionObserver' in window) {
+    const byId = new Map(links.map((l) => [decodeURIComponent(l.hash.slice(1)), l]));
+    let active: HTMLAnchorElement | undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const next = byId.get(entry.target.id);
+          if (!next || next === active) continue;
+          active?.removeAttribute('aria-current');
+          next.setAttribute('aria-current', 'true');
+          active = next;
+        }
+      },
+      { rootMargin: '0px 0px -70% 0px' }
+    );
+
+    headings.forEach((h) => observer.observe(h));
+  }
+</script>
+
+<style>
+  .case-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .subtitle {
+    max-width: 68ch;
+    color: var(--color-ink-2);
+    margin-bottom: 0;
+  }
+
+  .case-body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (min-width: 1024px) {
+    .case-body {
+      grid-template-columns: 200px minmax(0, 680px);
+      gap: 4rem;
+      align-items: start;
+    }
+
+    .rail {
+      position: sticky;
+      top: 2rem;
+    }
+
+    /* Above 1024px the index is always open and the disclosure arrow is
+       meaningless, so the summary becomes a plain heading. */
+    .rail-index > summary {
+      list-style: none;
+      pointer-events: none;
+    }
+
+    .rail-index > summary::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  .rail-index > summary {
+    color: var(--color-ink-3);
+    cursor: pointer;
+    padding-block: 0.5rem;
+  }
+
+  .rail-list {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .rail-link {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    color: var(--color-ink-2);
+    text-decoration: none;
+    border-left: 1px solid var(--color-grid);
+  }
+
+  .rail-link[aria-current='true'] {
+    background-color: var(--color-plot-soft);
+    border-left-color: var(--color-plot);
+    color: var(--color-ink);
+  }
+
+  .rail-note {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-grid);
+    color: var(--color-ink-3);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .meta {
+    margin: 0 0 2.5rem;
+    padding: 0 0 1.5rem;
+    border-bottom: 1px solid var(--color-grid);
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .meta-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.125rem;
+  }
+
+  @media (min-width: 560px) {
+    .meta-row {
+      grid-template-columns: 120px 1fr;
+      gap: 1rem;
+      align-items: baseline;
+    }
+  }
+
+  .meta dt {
+    color: var(--color-ink-3);
+  }
+
+  .meta dd {
+    margin: 0;
+    color: var(--color-ink-2);
+  }
+
+  /* Prose measure is capped, but tables and measurement blocks inside the
+     case study are allowed to use the full main column. */
+  .prose :global(p),
+  .prose :global(ul),
+  .prose :global(ol) {
+    max-width: 68ch;
+  }
+
+  .prose :global(h2) {
+    scroll-margin-top: 2rem;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-block: 3.5rem 1rem;
+  }
+
+  .prose :global(strong) {
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background-color: var(--color-paper-2);
+    padding: 0.1em 0.3em;
+    border-radius: var(--radius-control);
+  }
+
+  .prose :global(.measurement) {
+    margin-block: 2rem;
+  }
+</style>

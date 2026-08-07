@@ -1,0 +1,161 @@
+---
+// CONTENT.md section 6. Newest first. No citation counts: they go stale, they
+// differ between indexes, and a low true number invites a bad read.
+import Card from '../components/Card.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Shell from '../layouts/Shell.astro';
+
+const papers = [
+  {
+    index: '01',
+    title: 'First-author paper under review, ACL Rolling Review, 2026',
+    position: 'First author of four.',
+    body: 'Under review. No DOI and no public link to the manuscript yet.',
+    link: { href: '/work/gatekeepnt', label: 'What I can say about it now' },
+  },
+  {
+    index: '02',
+    title:
+      'A Review of Transforming AI for Depression Detection: Transformer Model Dominance, Multimodal Approaches, and Future Pathways',
+    authorsBefore: 'Jayashri Patil, ',
+    authorsAfter: ', Dhruvil Patel, Ravirajsinh Chauhan, Megha Patel',
+    venue:
+      'Computing and Machine Learning, CML 2025. Lecture Notes in Networks and Systems, volume 1612, pages 87 to 106. Springer Nature Singapore, published January 2026.',
+    position: 'Second author of five. Scopus indexed. Not indexed in Web of Science. 79 references.',
+    body:
+      'Transformer models dominate depression detection, with BERT at 93.8 percent mean accuracy across the reviewed studies, and social media data accounts for over 55 percent of the research. The chapter proposes ATCTM, using event-triggered updates and personalised dynamic embeddings.',
+    link: { href: 'https://doi.org/10.1007/978-981-95-2872-1_7', label: 'doi.org/10.1007/978-981-95-2872-1_7' },
+  },
+  {
+    index: '03',
+    title:
+      'Enhanced Depression Detection on Social Media Using Advanced Machine Learning and Linguistic Analysis Techniques',
+    authorsBefore: 'Jayashri Patil, Vishal Patil, ',
+    authorsAfter: ', Dhruvil Patel, S. Trivedi, R. Patel',
+    venue:
+      'Intelligent Computing and Communication, ICICC 2024. Lecture Notes in Networks and Systems, volume 1240, pages 263 to 275. Springer Nature Singapore, published 1 August 2025. Presented August 2024 at CMR Institute of Technology, Hyderabad.',
+    position: 'Third author of six.',
+    body:
+      '20,000 labelled English tweets. TF-IDF plus sentiment polarity plus LIWC features across Multinomial Naive Bayes, logistic regression and SVM. Best result 88.10 percent accuracy, over 8 percent above prior work on the same dataset.',
+    link: { href: 'https://doi.org/10.1007/978-981-96-1264-2_23', label: 'doi.org/10.1007/978-981-96-1264-2_23' },
+  },
+  {
+    index: '04',
+    title:
+      'Towards a Sustainable Future: Enabling Industry with Green Web 3.0, Decentralized AI, and Edge Intelligence',
+    authorsBefore: 'Meenakshi Kashyap, Ravirajsinh Chauhan, Dhruvil Patel, ',
+    authorsAfter: '',
+    venue:
+      'ITM Web of Conferences, volume 65, article 03015, ICMAETM 2024. EDP Sciences. Open access under CC BY 4.0.',
+    position: 'Fourth author of four. My first conference presentation, at Sankalchand Patel University.',
+    link: { href: 'https://doi.org/10.1051/itmconf/20246503015', label: 'doi.org/10.1051/itmconf/20246503015' },
+    extra: {
+      href: 'https://www.itm-conferences.org/articles/itmconf/pdf/2024/08/itmconf_icmaetm2024_03015.pdf',
+      label: 'Full text PDF, freely downloadable',
+    },
+  },
+];
+---
+<Shell
+  title="Papers"
+  description="Four papers, three published and one first-author under review. Venues, DOIs, and my author position on each, stated plainly."
+>
+  <SectionHeading as="h1" solid="Published" ghost="Papers" />
+  <p class="display-lede">
+    Four papers. Three published, one first-author under review. I state my
+    author position on every one.
+  </p>
+
+  <ol class="papers card-grid section-body">
+    {papers.map((p) => (
+      <Card as="li">
+        <p class="t-label index">{p.index}</p>
+        <h2 class="paper-title">{p.title}</h2>
+        {p.authorsBefore !== undefined && (
+          <p class="t-small authors">
+            {p.authorsBefore}<strong>Kishan Prajapati</strong>{p.authorsAfter}
+          </p>
+        )}
+        {p.venue && <p class="t-small venue">{p.venue}</p>}
+        <p class="t-small position">{p.position}</p>
+        {p.body && <p class="t-small summary">{p.body}</p>}
+        <p class="t-small"><a href={p.link.href}>{p.link.label}</a></p>
+        {p.extra && <p class="t-small"><a href={p.extra.href}>{p.extra.label}</a></p>}
+      </Card>
+    ))}
+  </ol>
+
+  <section class="section" aria-labelledby="position-heading">
+    <SectionHeading id="position-heading" solid="Author" ghost="Position" />
+    <p class="section-lede section-body">
+      Fourth of four in 2024, third of six in 2024, second of five in 2025,
+      first of four in 2026. The direction is the point.
+    </p>
+  </section>
+
+  <section class="section" aria-labelledby="collaborators-heading">
+    <SectionHeading id="collaborators-heading" solid="Who I" ghost="Work With" />
+    <p class="section-lede section-body">
+      Dr. Jayashri Patil, my mentor at P P Savani University. Dhruvil Patel, peer
+      co-author. On the ACL submission: Ning-Hsuan Tseng, Asteria Kaeberlein and
+      Malihe Alikhani.
+    </p>
+    <p class="more t-label">
+      <a href="https://scholar.google.com/citations?user=AqL9YRcAAAAJ">Google Scholar profile</a>
+    </p>
+  </section>
+</Shell>
+
+<style>
+  .section-body {
+    margin-top: 2.5rem;
+  }
+
+  .section-lede {
+    max-width: 60ch;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    color: var(--color-ink-2);
+  }
+
+  .more {
+    margin-top: 2rem;
+  }
+
+  .papers {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .index {
+    color: var(--color-ink-3);
+    margin: 0 0 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .paper-title {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-row-title);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .authors {
+    color: var(--color-ink);
+    margin: 0 0 0.5rem;
+  }
+
+  .venue,
+  .position {
+    color: var(--color-ink-2);
+    margin: 0 0 0.5rem;
+  }
+
+  .summary {
+    color: var(--color-ink-3);
+    margin: 0.75rem 0;
+  }
+</style>

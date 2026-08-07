@@ -1,0 +1,53 @@
+---
+// Toggles the .dark class on html and persists the choice.
+// localStorage is used for the theme preference and nothing else.
+//
+// D-019, superseding D-015: the accessible name is computed from this
+// button's own contents, so it contains the visible text and satisfies
+// WCAG 2.5.3 Label in Name. There is no aria-label and no aria-pressed:
+// a theme switch is a choice between two states, not a pressed state.
+// Both states are rendered and CSS picks one from the .dark class on html,
+// which the inline script in Base.astro sets before first paint. That keeps
+// the name correct on first paint and leaves the script with one job.
+---
+<button id="theme-toggle" type="button" class="t-label">
+  <span class="state state-light">theme: light<span class="sr-only">, switch to dark</span></span>
+  <span class="state state-dark">theme: dark<span class="sr-only">, switch to light</span></span>
+</button>
+
+<script>
+  const button = document.getElementById('theme-toggle');
+  button?.addEventListener('click', () => {
+    const dark = document.documentElement.classList.toggle('dark');
+    try {
+      localStorage.setItem('theme', dark ? 'dark' : 'light');
+    } catch {
+      /* storage unavailable: the theme still switches for this page view */
+    }
+  });
+</script>
+
+<style>
+  button {
+    background: none;
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-control);
+    color: var(--color-ink-2);
+    padding: 0.5rem 0.625rem;
+    cursor: pointer;
+  }
+
+  /* Only one state is in the tree at a time, so the accessible name is
+     "theme: light, switch to dark" or "theme: dark, switch to light". */
+  .state-dark {
+    display: none;
+  }
+
+  :global(.dark) .state-light {
+    display: none;
+  }
+
+  :global(.dark) .state-dark {
+    display: inline;
+  }
+</style>

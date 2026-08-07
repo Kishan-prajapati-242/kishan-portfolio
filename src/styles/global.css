@@ -1,0 +1,583 @@
+/*
+  Phase 0 global stylesheet.
+  Every value here comes from docs/DESIGN.md sections 2, 3, 4, and 7,
+  with the D-003 correction applied to the type scale.
+  Do not adjust any hex value: several sit just above the WCAG AA threshold.
+*/
+
+@import "tailwindcss";
+
+@theme {
+  /* Colour tokens, light, DESIGN.md section 2 */
+  --color-paper: #F6F8F6; /* cool, faintly green-shifted white. NOT cream. */
+  --color-paper-2: #ECF0EE; /* recessed panels, table header rows */
+  --color-grid: #D3DFD9; /* graph rule */
+  --color-ink: #16201C; /* body and headings. 15:1 */
+  --color-ink-2: #57635D; /* secondary prose. 6.3:1 */
+  --color-ink-3: #656F6A; /* provenance captions. 4.9:1, do not lighten */
+  --color-null: #A9B4AE; /* the unmeasured state. Decorative glyphs only. */
+  --color-plot: #1B4D42; /* links, operating point marker, primary accent. 9.1:1 */
+  --color-plot-soft: #E2EDE8; /* accent wash behind active nav, quoted blocks */
+  --color-annot: #8A6A1F; /* ochre. Caveats and limitations only. 4.8:1 */
+  --color-withdrawn: #A63A2E; /* withdrawn or thrown-out measurements only. 6.2:1 */
+
+  /* Faces, DESIGN.md section 3. IBM Plex Mono has no variable build,
+     so the static package supplies weights 400 and 500 only. */
+  --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Border radius, D-055. Geometry follows the reference; only colour and
+     type were held back. Hairlines stay 1px. */
+  --radius-card: 8px;
+  --radius-panel: 16px;
+  --radius-control: 6px;
+}
+
+/* Type scale, DESIGN.md section 3. --text-data-big is Plex Mono 500 per D-003. */
+:root {
+  color-scheme: light;
+  --text-display-xl: clamp(2.5rem, 6vw, 4rem);      /* Plex Mono 500, tracking -0.03em, leading 1.02 */
+  --text-display-l: clamp(1.75rem, 3.5vw, 2.5rem);  /* Plex Mono 500, tracking -0.02em, leading 1.1 */
+  --text-h2: 1.375rem;                              /* Plex Mono 500, tracking -0.01em */
+  --text-h3: 1.0625rem;                             /* Plex Sans 600 */
+  --text-body: 1.0625rem;                           /* Plex Sans 400, leading 1.65 */
+  --text-small: 0.875rem;                           /* Plex Sans 400 */
+  --text-label: 0.6875rem;                          /* Plex Mono 500, uppercase, tracking 0.11em */
+  --text-data: 1rem;                                /* Plex Mono 400 */
+  --text-data-big: clamp(2rem, 4.5vw, 3.25rem);     /* Plex Mono 500, tracking -0.02em, per D-003 */
+
+  /* Display scale, measured off the reference in ref/ANALYSIS.md.
+     110px desktop down to 52px mobile on the page title, 90px down to 42px on
+     section headings, 70px on stat figures. Tracking on the two display sizes
+     is zero: that is measured, not guessed. The reference has no wide tracking
+     anywhere, and the only non-zero tracking on it is negative. */
+  --text-display: clamp(2.75rem, 11.5vw, 6.875rem);
+  --text-section: clamp(2.625rem, 6.25vw, 5.625rem);
+  --text-stat: clamp(2.5rem, 4.9vw, 4.375rem);
+  --text-row-title: 1.625rem;
+}
+
+/* Dark tokens, DESIGN.md section 2. Applied via the .dark class on html,
+   set before first paint by the inline script in Base.astro.
+
+   D-020: this block sits after :root deliberately. Both selectors have
+   specificity (0,1,0) and both are unlayered, so source order is the only
+   thing deciding the winner. With :root last, color-scheme stayed light in
+   dark mode and the browser painted light chrome on a dark page. Do not
+   raise this to html.dark. Keep both token blocks at flat specificity so
+   either one can be overridden later without an escalation. */
+.dark {
+  --color-paper: #0E1412;
+  --color-paper-2: #161E1B;
+  --color-grid: #1F2A26;
+  --color-ink: #E3E9E5;
+  --color-ink-2: #9AA6A0;
+  --color-ink-3: #7C8882;
+  --color-null: #4C5651;
+  --color-plot: #5FBFA6;
+  --color-plot-soft: #16302A;
+  --color-annot: #C9A227;
+  --color-withdrawn: #E0796C;
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    /* The graph paper background is gone as of D-053. It fought the flat,
+       card-based layout the site is now matched to, and the reference field is
+       a single unbroken surface. Restoring it is one rule if that changes. */
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.65;
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1 {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-display-xl);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    margin-block: 0 0.5em;
+  }
+
+  h2 {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-h2);
+    letter-spacing: -0.01em;
+    margin-block: 2em 0.5em;
+  }
+
+  h3 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: var(--text-h3);
+    margin-block: 1.5em 0.5em;
+  }
+
+  p {
+    margin-block: 0.75em;
+  }
+
+  main {
+    padding-block: 3rem 7rem;
+  }
+
+  a {
+    color: var(--color-plot);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.15em;
+    transition: text-decoration-thickness 120ms;
+  }
+
+  a:hover,
+  a:focus-visible {
+    text-decoration-thickness: 2px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-plot);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Container, DESIGN.md section 4: max 1180px, gutters 24px under 768px, 40px above */
+  .container-site {
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+
+  @media (min-width: 768px) {
+    .container-site {
+      padding-inline: 40px;
+    }
+  }
+
+  /* Skip link: visually offscreen until focused */
+  .skip-link {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 50;
+    transform: translateY(-300%);
+    background-color: var(--color-paper-2);
+    color: var(--color-ink);
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-control);
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    transform: none;
+  }
+
+  /* Section divider, DESIGN.md section 4: an error-bar bracket, not a plain hr.
+     1px rule in the grid colour with 8px end caps at both ends. */
+  .divider {
+    position: relative;
+    height: 8px;
+    margin-block: 3rem;
+    border-inline: 1px solid var(--color-grid);
+  }
+
+  .divider::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% - 0.5px);
+    height: 1px;
+    background-color: var(--color-grid);
+  }
+
+  /* Type roles, DESIGN.md section 3 */
+  .t-display-xl {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-display-xl);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+  }
+
+  .t-display-l {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-display-l);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .t-h2 {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-h2);
+    letter-spacing: -0.01em;
+  }
+
+  .t-h3 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: var(--text-h3);
+  }
+
+  .t-body {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: var(--text-body);
+    line-height: 1.65;
+  }
+
+  .t-small {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: var(--text-small);
+  }
+
+  .t-label {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+  }
+
+  .t-data {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: var(--text-data);
+  }
+
+  .t-data-big {
+    font-family: var(--font-mono);
+    font-weight: 500; /* D-003 */
+    font-size: var(--text-data-big);
+    letter-spacing: -0.02em;
+  }
+
+  /* Prose measure cap, DESIGN.md section 3. Tables and plots may exceed it. */
+  .measure {
+    max-width: 68ch;
+  }
+
+  /* Tables and plots break the prose measure, DESIGN.md section 4. */
+  .bleed {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Visually hidden but still in the accessibility tree, so the text keeps
+     contributing to accessible names. D-019 depends on that: the theme
+     toggle's name is computed from its own contents. Never swap this for
+     display:none, which would remove the text from the tree entirely. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Measurement row structure, DESIGN.md section 5. The four rows are label,
+     value, error bar, notes. Above 900px the blocks sit in a row and share a
+     baseline through subgrid, so the value lines align exactly rather than
+     through guessed padding. Layout lives here rather than in the component's
+     scoped styles so the group override wins without a specificity fight. */
+  .measurement {
+    display: grid;
+    grid-template-rows: auto auto auto auto;
+    row-gap: 0.5rem;
+  }
+
+  .measurement-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (min-width: 900px) {
+    .measurement-row {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto auto auto auto;
+      column-gap: 20px;
+      row-gap: 0;
+    }
+
+    .measurement-row > .measurement {
+      grid-row: span 4;
+      grid-template-rows: subgrid;
+    }
+
+    /* Carded variant: the card is the subgrid item and the measurement nests
+       inside it, so the value lines still align across all three cards. */
+    .measurement-row > .card {
+      grid-row: span 4;
+      display: grid;
+      grid-template-rows: subgrid;
+    }
+
+    .measurement-row > .card > .measurement {
+      grid-row: span 4;
+      grid-template-rows: subgrid;
+    }
+  }
+
+  /* Card grids, DESIGN.md section 4. 20px between cards throughout. */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (min-width: 900px) {
+    .card-grid-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .card-grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .chip {
+    display: inline-block;
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-control);
+    padding: 4px 8px;
+    color: var(--color-ink-2);
+  }
+
+  /* The shell, measured off the reference: a 1140px field holding a 344px
+     sticky column, a 100px gutter and a 696px content column. */
+  .shell {
+    max-width: 1140px;
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+
+  .shell-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  .shell-main,
+  .shell-side {
+    min-width: 0;
+  }
+
+  @media (min-width: 1024px) {
+    .shell {
+      padding-inline: 0;
+    }
+
+    .shell-grid {
+      grid-template-columns: 344px minmax(0, 1fr);
+      column-gap: 100px;
+      align-items: start;
+    }
+
+    .shell-side {
+      position: sticky;
+      top: 40px;
+    }
+  }
+
+  /* Two-tone display heading. The solid line sits over a ghosted line at 18
+     percent, which is the reference's single most recognisable move. */
+  .display,
+  .section-h {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  .display {
+    font-size: var(--text-display);
+  }
+
+  .section-h {
+    font-size: var(--text-section);
+  }
+
+  /* In-page heading for content-heavy pages, where a 90px section heading
+     every few paragraphs would be unreadable. Same family and weight as the
+     display roles, scaled to sit inside prose. */
+  .sub-h {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  .ghost {
+    display: block;
+    color: color-mix(in oklab, var(--color-ink) 18%, var(--color-paper));
+  }
+
+  /* Below the shell breakpoint the profile column stops being sticky, moves to
+     the top, and the display headings centre. Everything else stays left. */
+  @media (max-width: 1023px) {
+    .display,
+    .section-h,
+    .display-lede {
+      text-align: center;
+    }
+
+    .display-lede {
+      margin-inline: auto;
+    }
+  }
+
+  .display-lede {
+    max-width: 46ch;
+    font-size: 1.125rem;
+    line-height: 1.4;
+    color: var(--color-ink-2);
+    margin: 1.5rem 0 0;
+  }
+
+  /* Stat block: large figure over a small uppercase label. Both carry -0.01em,
+     which is the reference's actual tracking, negative rather than wide. */
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px 48px;
+    margin: 3rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (max-width: 1023px) {
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .stat-label {
+      max-width: none;
+      font-size: 0.8125rem;
+    }
+  }
+
+  .stat-value {
+    display: block;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: var(--text-stat);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  .stat-label {
+    display: block;
+    max-width: 14ch;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+
+  /* List rows, the reference's pattern for projects and experience: title and
+     subtitle stacked on the left, meta pushed to the far right, hairline
+     between rows. */
+  .rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 8px 32px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--color-grid);
+  }
+
+  .row:first-child {
+    border-top: 1px solid var(--color-grid);
+  }
+
+  .row-title {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-row-title);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+  }
+
+  .row-title a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .row-title a:hover,
+  .row-title a:focus-visible {
+    color: var(--color-plot);
+  }
+
+  .row-sub {
+    margin: 0.5rem 0 0;
+    grid-column: 1;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--color-ink-2);
+    max-width: 60ch;
+  }
+
+  .row-meta {
+    grid-column: 2;
+    grid-row: 1;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--color-ink-3);
+    white-space: nowrap;
+  }
+
+  .section {
+    margin-top: 9rem;
+  }
+}
+
+/* Reduced motion, DESIGN.md section 7, verbatim */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

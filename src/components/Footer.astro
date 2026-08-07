@@ -1,0 +1,50 @@
+---
+// Footer copy from CONTENT.md section 10. Links from CONTENT.md section 1.
+// The "Source at" line is omitted until the repo is public and is added in
+// Phase 6, per D-013. The build date is generated, never hardcoded.
+const buildDate = new Date().toISOString().slice(0, 10);
+---
+<footer class="site-footer">
+  <div class="shell">
+    <p class="t-small who">
+      <span>Kishan Prajapati, Boston.</span>
+      <a href="mailto:prajapati.kish@northeastern.edu">prajapati.kish@northeastern.edu</a>
+    </p>
+    <ul class="t-small foot-links">
+      <li><a href="https://github.com/Kishan-prajapati-242">GitHub</a></li>
+      <li><a href="https://www.linkedin.com/in/kishan-prajapati-617a00202">LinkedIn</a></li>
+      <li><a href="https://scholar.google.com/citations?user=AqL9YRcAAAAJ">Google Scholar</a></li>
+      <li><a href="https://leetcode.com/u/KishanSP242">LeetCode</a></li>
+      <li><a href="/kishan-prajapati-resume.pdf">Resume (PDF)</a></li>
+    </ul>
+    <p class="t-label last-measured">Last measured: {buildDate}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-grid);
+    padding-block: 2rem;
+    color: var(--color-ink-2);
+  }
+
+  .who {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .foot-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+  }
+
+  .last-measured {
+    color: var(--color-ink-3);
+    margin-top: 1rem;
+  }
+</style>

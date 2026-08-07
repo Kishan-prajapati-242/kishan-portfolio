@@ -1,0 +1,252 @@
+---
+// The hero plot, DESIGN.md section 8. Hand-authored inline SVG, no charting
+// library. Data and caption are CONTENT.md section 2, verbatim.
+//
+// The y axis starts at 0.93 so the curve's shape is visible at all. That is
+// a defensible choice only if it is stated, so it is labelled twice: on the
+// axis itself and in the note beside it.
+
+const points = [
+  { ef: 200, recall: 0.9431, stdev: 0.0028 },
+  { ef: 400, recall: 0.9766, stdev: 0.0015 },
+  { ef: 600, recall: 0.9857, stdev: 0.0011 },
+  { ef: 800, recall: 0.9898, stdev: 0.0008 },
+];
+
+const OPERATING_EF = 600;
+
+// Plot area inside the viewBox. Room on the left for y tick labels and on
+// the bottom for x tick labels and the axis title.
+const L = 74;
+const R = 614;
+const T = 30;
+const B = 240;
+const Y_MIN = 0.93;
+const Y_MAX = 1.0;
+const X_MIN = 200;
+const X_MAX = 800;
+
+const x = (ef: number) => L + ((ef - X_MIN) / (X_MAX - X_MIN)) * (R - L);
+const y = (recall: number) => B - ((recall - Y_MIN) / (Y_MAX - Y_MIN)) * (B - T);
+const yScale = (delta: number) => (delta / (Y_MAX - Y_MIN)) * (B - T);
+
+const plotted = points.map((p) => ({
+  ...p,
+  cx: x(p.ef),
+  cy: y(p.recall),
+  half: yScale(p.stdev),
+}));
+
+const curve = plotted.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.cx} ${p.cy}`).join(' ');
+const yTicks = [0.93, 0.95, 0.97, 0.99, 1.0];
+const operating = plotted.find((p) => p.ef === OPERATING_EF)!;
+
+// The leader runs left from the operating point into the empty region above
+// the rising curve, so it never crosses the line it is annotating.
+const LEADER_X = operating.cx - 160;
+
+const summary =
+  'Recall at 200 candidates rises steeply from 0.9431 at ef_search 200 to 0.9766 at 400, then flattens through 0.9857 at 600 and 0.9898 at 800. Production runs at the ef_search 600 operating point, where the curve has already flattened.';
+---
+<figure class="plot">
+  <svg viewBox="0 0 640 290" class="chart" role="img" aria-label={summary}>
+    <!-- Axes. Present immediately, never animated. -->
+    <line class="axis" x1={L} y1={T} x2={L} y2={B} />
+    <line class="axis" x1={L} y1={B} x2={R} y2={B} />
+
+    {yTicks.map((t) => (
+      <g>
+        <line class="tick" x1={L - 4} y1={y(t)} x2={L} y2={y(t)} />
+        <text class="tick-label" x={L - 9} y={y(t) + 3.5} text-anchor="end">
+          {t.toFixed(2)}
+        </text>
+      </g>
+    ))}
+
+    {points.map((p) => (
+      <g>
+        <line class="tick" x1={x(p.ef)} y1={B} x2={x(p.ef)} y2={B + 4} />
+        <text class="tick-label" x={x(p.ef)} y={B + 17} text-anchor="middle">
+          {p.ef}
+        </text>
+      </g>
+    ))}
+
+    <text class="axis-title" x={(L + R) / 2} y={B + 40} text-anchor="middle">ef_search</text>
+    <text class="axis-title" x={-((T + B) / 2)} y={18} text-anchor="middle" transform="rotate(-90)">
+      recall@200
+    </text>
+    <text class="axis-note" x={L + 6} y={T - 12}>y axis starts at 0.93</text>
+
+    <!-- Error bars: plus and minus one standard deviation. They are tiny at
+         this scale. They are drawn anyway, because they are the point. -->
+    {plotted.map((p) => (
+      <g>
+        <line class="err" x1={p.cx} y1={p.cy - p.half} x2={p.cx} y2={p.cy + p.half} />
+        <line class="err" x1={p.cx - 3} y1={p.cy - p.half} x2={p.cx + 3} y2={p.cy - p.half} />
+        <line class="err" x1={p.cx - 3} y1={p.cy + p.half} x2={p.cx + 3} y2={p.cy + p.half} />
+      </g>
+    ))}
+
+    <path class="curve" d={curve} pathLength="1" fill="none" />
+
+    {plotted.map((p) => <circle class="dot" cx={p.cx} cy={p.cy} r="3" />)}
+
+    <!-- Operating point, marked and labelled. -->
+    <g class="operating">
+      <line class="leader" x1={LEADER_X} y1={operating.cy} x2={operating.cx - 9} y2={operating.cy} />
+      <circle class="op-marker" cx={operating.cx} cy={operating.cy} r="7" fill="none" />
+      <text class="op-label" x={LEADER_X - 5} y={operating.cy + 3.5} text-anchor="end">
+        production: ef 600, N 200
+      </text>
+    </g>
+  </svg>
+
+  <table class="sr-only">
+    <caption>Recall at 200 candidates by ef_search, with standard deviation</caption>
+    <thead>
+      <tr><th scope="col">ef_search</th><th scope="col">recall@200</th><th scope="col">standard deviation</th></tr>
+    </thead>
+    <tbody>
+      {points.map((p) => (
+        <tr>
+          <th scope="row">{p.ef}</th>
+          <td>{p.recall.toFixed(4)}</td>
+          <td>{p.stdev.toFixed(4)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+
+  <figcaption class="caption">
+    Ground truth is exact top-50 and top-200 for 520 queries, computed by forced
+    sequential scan and committed to the repo. 500 of those 520 queries are
+    corpus titles, which likely inflates recall relative to real topical
+    queries. The cost of ef=600 over ef=200 was below measurement resolution on
+    this hardware.
+  </figcaption>
+</figure>
+
+<style>
+  .plot {
+    margin: 0;
+  }
+
+  /* No card, no border, no fill. The plot sits on the graph paper. */
+  .chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .axis {
+    stroke: var(--color-ink-3);
+    stroke-width: 1;
+  }
+
+  .tick {
+    stroke: var(--color-ink-3);
+    stroke-width: 1;
+  }
+
+  .tick-label,
+  .axis-title,
+  .axis-note,
+  .op-label {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    fill: var(--color-ink-3);
+  }
+
+  .tick-label {
+    font-size: 11px;
+    font-weight: 400;
+  }
+
+  .axis-title,
+  .axis-note,
+  .op-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+  }
+
+  .err {
+    stroke: var(--color-ink-3);
+    stroke-width: 1;
+  }
+
+  .curve {
+    stroke: var(--color-plot);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .dot {
+    fill: var(--color-plot);
+  }
+
+  .op-marker,
+  .leader {
+    stroke: var(--color-plot);
+    stroke-width: 1.5;
+  }
+
+  .leader {
+    stroke-width: 1;
+  }
+
+  .op-label {
+    fill: var(--color-plot);
+  }
+
+  .caption {
+    margin-top: 1rem;
+    max-width: 68ch;
+    font-size: var(--text-small);
+    line-height: 1.6;
+    color: var(--color-ink-3);
+  }
+
+  /* Motion, DESIGN.md section 7. The curve draws once on load, then the
+     operating point fades in. pathLength="1" normalises the path so the
+     dash animation needs no measured length and therefore no JavaScript. */
+  .curve {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw-curve 900ms ease-out forwards;
+  }
+
+  .operating {
+    opacity: 0;
+    animation: fade-marker 200ms ease-out 900ms forwards;
+  }
+
+  @keyframes draw-curve {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes fade-marker {
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Complete and correct on first paint, not blank. */
+  @media (prefers-reduced-motion: reduce) {
+    .curve {
+      stroke-dashoffset: 0;
+      animation: none;
+    }
+
+    .operating {
+      opacity: 1;
+      animation: none;
+    }
+  }
+</style>

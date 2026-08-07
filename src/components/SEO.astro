@@ -1,0 +1,46 @@
+---
+// CONTENT.md section 11. Title template, Open Graph, and the Person schema.
+// The JSON-LD carries no email, no address, and no telephone.
+interface Props {
+  title?: string;
+  description: string;
+  ogType?: 'profile' | 'article' | 'website';
+  jsonLdPerson?: boolean;
+}
+
+const { title, description, ogType = 'website', jsonLdPerson = false } = Astro.props;
+
+const fullTitle = title ? `${title} · Kishan Prajapati` : 'Kishan Prajapati';
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined;
+const ogImage = Astro.site ? new URL('/og-default.png', Astro.site).href : undefined;
+
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Kishan Prajapati',
+  url: Astro.site?.href,
+  sameAs: [
+    'https://github.com/Kishan-prajapati-242',
+    'https://www.linkedin.com/in/kishan-prajapati-617a00202',
+    'https://scholar.google.com/citations?user=AqL9YRcAAAAJ',
+  ],
+  affiliation: {
+    '@type': 'CollegeOrUniversity',
+    name: 'Northeastern University',
+  },
+  jobTitle: 'Graduate Teaching Assistant',
+};
+---
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+{canonical && <link rel="canonical" href={canonical.href} />}
+
+<meta property="og:site_name" content="Kishan Prajapati" />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={ogType} />
+{canonical && <meta property="og:url" content={canonical.href} />}
+{ogImage && <meta property="og:image" content={ogImage} />}
+<meta name="twitter:card" content="summary_large_image" />
+
+{jsonLdPerson && <script is:inline type="application/ld+json" set:html={JSON.stringify(person)} />}

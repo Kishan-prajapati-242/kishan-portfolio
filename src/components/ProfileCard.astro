@@ -1,0 +1,109 @@
+---
+// The sticky profile column, matched to the reference measured in
+// ref/ANALYSIS.md: 344px wide, sticky at top 40px, a tall portrait above the
+// name. Below 1024px the shell drops it out of sticky and moves it to the top.
+import { Image } from 'astro:assets';
+import headshot from '../assets/headshot.png';
+
+const links = [
+  { href: 'https://github.com/Kishan-prajapati-242', label: 'GitHub' },
+  { href: 'https://www.linkedin.com/in/kishan-prajapati-617a00202', label: 'LinkedIn' },
+  { href: 'https://scholar.google.com/citations?user=AqL9YRcAAAAJ', label: 'Scholar' },
+  { href: 'https://leetcode.com/u/KishanSP242', label: 'LeetCode' },
+];
+---
+<aside class="profile">
+  <Image
+    class="portrait"
+    src={headshot}
+    alt="Kishan Prajapati"
+    width={592}
+    height={592}
+    quality={95}
+    loading="eager"
+  />
+  <p class="name">Kishan Prajapati</p>
+  <p class="role">MS Computer Science at Northeastern. I build retrieval and NLP systems.</p>
+  <ul class="links">
+    {links.map((l) => (
+      <li><a class="t-label" href={l.href}>{l.label}</a></li>
+    ))}
+  </ul>
+  <p class="resume t-label"><a href="/kishan-prajapati-resume.pdf">Resume (PDF)</a></p>
+</aside>
+
+<style>
+  .profile {
+    background-color: var(--color-paper-2);
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-panel);
+    padding: 24px;
+    text-align: center;
+  }
+
+  /* The source is square, so the browser crops it to a portrait 3:4 rather
+     than the image pipeline distorting it. */
+  .portrait {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    object-position: center 28%;
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-card);
+  }
+
+  .name {
+    margin: 20px 0 0;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 2rem;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    color: var(--color-ink);
+  }
+
+  .role {
+    margin: 12px 0 0;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--color-ink-2);
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 16px;
+    list-style: none;
+    margin: 20px 0 0;
+    padding: 20px 0 0;
+    border-top: 1px solid var(--color-grid);
+  }
+
+  .links a {
+    color: var(--color-ink-2);
+    text-decoration: none;
+  }
+
+  .links a:hover,
+  .links a:focus-visible {
+    color: var(--color-plot);
+  }
+
+  .resume {
+    margin: 16px 0 0;
+  }
+
+  .resume a {
+    text-decoration: none;
+    color: var(--color-plot);
+  }
+
+  .resume a:hover,
+  .resume a:focus-visible {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+</style>

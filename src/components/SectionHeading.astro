@@ -1,0 +1,21 @@
+---
+// The reference's signature move: a solid first line over a ghosted second
+// line at 18 percent, uppercase, line-height 1, tracking zero.
+//
+// text-transform does the uppercasing rather than the source text being typed
+// in capitals, which is how the reference does it. That keeps the DOM text and
+// the accessible name in sentence case.
+export interface Props {
+  solid: string;
+  ghost?: string;
+  id?: string;
+  as?: 'h1' | 'h2';
+}
+
+const { solid, ghost, id, as: Tag = 'h2' }: Props = Astro.props;
+const cls = Tag === 'h1' ? 'display' : 'section-h';
+---
+<Tag class={cls} id={id}>
+  {solid}
+  {ghost && <span class="ghost">{ghost}</span>}
+</Tag>

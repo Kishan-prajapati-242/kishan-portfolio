@@ -1,0 +1,184 @@
+---
+import type { ImageMetadata } from 'astro';
+import { getCollection } from 'astro:content';
+
+import Card from '../components/Card.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Shell from '../layouts/Shell.astro';
+
+const art = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/work/*.{png,jpg,jpeg,webp}',
+  { eager: true }
+);
+const artFor = (id: string) => art[`../assets/work/${id}.png`]?.default;
+
+const entries = (await getCollection('work', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const featured = entries.slice(0, 2);
+
+// CONTENT.md section 2, secondary facts.
+const stats = [
+  { value: '200+', label: 'students graded' },
+  { value: '4', label: 'papers, three published' },
+  { value: '$0', label: 'infrastructure cost' },
+];
+
+// CONTENT.md section 7.
+const teaching = [
+  { course: 'CS 3000 Algorithms and Data', term: 'Summer A 2026' },
+  { course: 'DS 3000 Foundations of Data Science', term: 'Summer B 2026' },
+  { course: 'CS 1800 Discrete Structures', term: 'Fall 2026' },
+];
+
+// CONTENT.md section 6, newest first.
+const papers = [
+  { title: 'First-author paper under review', venue: 'ACL Rolling Review', year: '2026', href: '/work/gatekeepnt' },
+  { title: 'A Review of Transforming AI for Depression Detection', venue: 'CML 2025, Springer LNNS', year: '2026', href: 'https://doi.org/10.1007/978-981-95-2872-1_7' },
+  { title: 'Enhanced Depression Detection on Social Media', venue: 'ICICC 2024, Springer LNNS', year: '2025', href: 'https://doi.org/10.1007/978-981-96-1264-2_23' },
+  { title: 'Towards a Sustainable Future', venue: 'ITM Web of Conferences', year: '2024', href: 'https://doi.org/10.1051/itmconf/20246503015' },
+];
+---
+<Shell
+  ogType="profile"
+  jsonLdPerson
+  description="MS Computer Science at Northeastern. I build retrieval and NLP systems and measure them carefully. Papers, engineering notes, and a search system over 182,853 papers built on a fanless laptop."
+>
+  <SectionHeading as="h1" solid="Software" ghost="Engineer" />
+  <p class="display-lede">
+    I build retrieval and NLP systems, and I measure what they actually do.
+    Right now that means search over 182,853 papers, a paper under review, and
+    two hundred students who need their homework back.
+  </p>
+
+  <ul class="stats">
+    {stats.map((s) => (
+      <li>
+        <span class="stat-value">{s.value}</span>
+        <span class="stat-label">{s.label}</span>
+      </li>
+    ))}
+  </ul>
+
+  <div class="card-grid card-grid-2 focus">
+    <Card>
+      <h2 class="focus-title">Retrieval and search</h2>
+      <p class="focus-body">
+        Postgres with pgvector and HNSW, bge-small embeddings on CPU, and hybrid
+        BM25 plus vector search fused by reciprocal rank.
+      </p>
+    </Card>
+    <Card>
+      <h2 class="focus-title">NLP and evaluation</h2>
+      <p class="focus-body">
+        Transformer fine-tuning and metric audits. Multi-task BERT and
+        DeBERTa-v3 models, and what SARI actually rewards.
+      </p>
+    </Card>
+  </div>
+
+  <section class="section" aria-labelledby="work-heading">
+    <SectionHeading id="work-heading" solid="Selected" ghost="Work" />
+    <div class="card-grid card-grid-2 section-body">
+      {featured.map((entry) => (
+        <ProjectCard entry={entry} art={artFor(entry.id)} showMeasurement={false} headingLevel={3} />
+      ))}
+    </div>
+    <p class="more t-label"><a href="/work">All five projects</a></p>
+  </section>
+
+  <section class="section" aria-labelledby="teaching-heading">
+    <SectionHeading id="teaching-heading" solid="Teaching" ghost="At Khoury" />
+    <ul class="rows section-body">
+      {teaching.map((t) => (
+        <li class="row">
+          <h3 class="row-title">{t.course}</h3>
+          <p class="row-meta">{t.term}</p>
+        </li>
+      ))}
+    </ul>
+    <p class="more t-label"><a href="/teaching">How I grade</a></p>
+  </section>
+
+  <section class="section" aria-labelledby="papers-heading">
+    <SectionHeading id="papers-heading" solid="Published" ghost="Papers" />
+    <ul class="rows section-body">
+      {papers.map((p) => (
+        <li class="row">
+          <h3 class="row-title"><a href={p.href}>{p.title}</a></h3>
+          <p class="row-meta">{p.year}</p>
+          <p class="row-sub">{p.venue}</p>
+        </li>
+      ))}
+    </ul>
+    <p class="more t-label"><a href="/papers">Full list with DOIs</a></p>
+  </section>
+
+  <section class="section" aria-labelledby="notes-heading">
+    <SectionHeading id="notes-heading" solid="Engineering" ghost="Notes" />
+    <p class="section-lede section-body">
+      I keep a record of the measurements I threw out. Six of them were
+      structurally incapable of failing, which means they proved nothing. The
+      harness now refuses to answer rather than guess.
+    </p>
+    <p class="more t-label"><a href="/notes">Read the record</a></p>
+  </section>
+
+  <section class="section" aria-labelledby="contact-heading">
+    <SectionHeading id="contact-heading" solid="Get In" ghost="Touch" />
+    <p class="section-lede section-body">
+      I am looking for a software engineering co-op. The fastest way to reach me
+      is email.
+    </p>
+    <p class="contact">
+      <a href="mailto:prajapati.kish@northeastern.edu">prajapati.kish@northeastern.edu</a>
+    </p>
+  </section>
+</Shell>
+
+<style>
+  .section-body {
+    margin-top: 2.5rem;
+  }
+
+  /* Balances the hero against the sticky column, which is taller than the
+     heading, lede and stats on their own. */
+  .focus {
+    margin-top: 3.5rem;
+  }
+
+  .focus-title {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-row-title);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .focus-body {
+    margin: 0;
+    color: var(--color-ink-2);
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  .section-lede {
+    max-width: 60ch;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    color: var(--color-ink-2);
+  }
+
+  .more {
+    margin-top: 2rem;
+  }
+
+  .contact {
+    margin-top: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: clamp(0.9375rem, 3.4vw, 1.25rem);
+    overflow-wrap: anywhere;
+  }
+</style>

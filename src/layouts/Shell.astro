@@ -1,0 +1,28 @@
+---
+// Two-column shell used by every page except the case studies, which supply
+// their own sidebar content through the same grid. Geometry is measured, see
+// ref/ANALYSIS.md section 2.
+import ProfileCard from '../components/ProfileCard.astro';
+import Base from './Base.astro';
+
+interface Props {
+  title?: string;
+  description: string;
+  ogType?: 'profile' | 'article' | 'website';
+  jsonLdPerson?: boolean;
+}
+
+const { title, description, ogType, jsonLdPerson } = Astro.props;
+---
+<Base title={title} description={description} ogType={ogType} jsonLdPerson={jsonLdPerson}>
+  <div class="shell">
+    <div class="shell-grid">
+      <div class="shell-side">
+        {Astro.slots.has('side') ? <slot name="side" /> : <ProfileCard />}
+      </div>
+      <div class="shell-main">
+        <slot />
+      </div>
+    </div>
+  </div>
+</Base>
