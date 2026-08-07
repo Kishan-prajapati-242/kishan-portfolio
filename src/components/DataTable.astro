@@ -61,11 +61,11 @@ if (bad !== -1) {
     background-color: var(--color-paper);
     padding: 24px;
     margin-block: 2rem;
-    transition: border-color 120ms;
+    transition: border-color var(--dur-fast) var(--ease-spring);
   }
 
   .is-card:hover,
-  .is-card:focus-within {
+  .is-card:has(:focus-visible) {
     border-color: var(--color-plot);
   }
 

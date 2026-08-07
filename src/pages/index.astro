@@ -219,17 +219,21 @@ const papers = [
     padding: 16px 18px;
     border: 1px solid var(--color-grid);
     border-radius: var(--radius-card);
-    transition: border-color var(--dur-fast) var(--ease-out-quart),
-      transform var(--dur-fast) var(--ease-out-quart),
-      box-shadow var(--dur-fast) var(--ease-out-quart);
+    transition: border-color var(--dur-fast) var(--ease-spring),
+      scale var(--dur-fast) var(--ease-spring),
+      box-shadow var(--dur-fast) var(--ease-spring);
   }
 
   /* A 1px inner highlight, so the four cells read as objects rather than
-     table cells. Still no drop shadow anywhere. */
+     table cells. Still no drop shadow anywhere.
+
+     scale, not transform: these cells carry a reveal-up animation on the time
+     clock whose fill-mode holds transform at its end value, which would beat
+     a transform transition outright. */
   .stat-cell:hover,
-  .stat-cell:focus-within {
+  .stat-cell:has(:focus-visible) {
     border-color: var(--color-plot);
-    transform: translateY(-2px);
+    scale: 1.02;
     box-shadow: inset 0 1px 0 0 var(--color-plot-soft);
   }
 

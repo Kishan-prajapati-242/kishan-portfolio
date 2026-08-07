@@ -33,6 +33,16 @@
   --radius-control: 6px;
 }
 
+/* interpolate-size makes the intrinsic size keywords, auto among them, valid
+   interpolation endpoints. It is what lets the case study rail animate to
+   height auto with no measuring script. Guarded, and nothing on the site is
+   allowed to depend on it: where it is missing, panels snap. */
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+}
+
 /* Type scale, DESIGN.md section 3. --text-data-big is Plex Mono 500 per D-003. */
 :root {
   color-scheme: light;
@@ -56,9 +66,24 @@
   --text-stat: clamp(2.5rem, 4.9vw, 4.375rem);
   --text-row-title: 1.625rem;
 
-  /* Motion tokens. Distances: text 16px, cards 24px, nothing over 32px. */
+  /* Motion tokens. Distances: text 16px, cards 24px, nothing over 32px.
+
+     One rule decides which easing a thing gets:
+       entrance      ease-out, fast start and a slow landing
+       exit          ease-in, the element accelerates away
+       hover, press  spring, and nowhere else
+       scroll-driven linear, because scroll position is already the easing
+
+     cubic-bezier is a 1D curve with both control points inside the unit
+     square on the output axis, so it cannot return a value above 1 and cannot
+     overshoot. That is why hovers built on it feel flat no matter how the
+     handles are placed. linear() takes an explicit list of output samples and
+     is under no such constraint: this one rises past the target to 1.06, dips
+     to 0.99 and settles. */
+  --ease-spring: linear(0, 0.18, 0.42, 0.72, 0.95, 1.06, 1.04, 1.01, 0.99, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);
   --dur-micro: 200ms;
   --dur-fast: 320ms;
   --dur-base: 600ms;
@@ -685,10 +710,12 @@
 
 /* ---- Page load, hero only, time-based ---------------------------------- */
 
-.hero-nav {
-  opacity: 0;
-  animation: reveal-fade var(--dur-base) var(--ease-out-quart) both;
-}
+/* The header does not animate. It is persistent chrome: it carries
+   transition:persist across a ClientRouter navigation, so fading it in would
+   fade it in again on every page change, and it already has nav-shrink on the
+   scroll clock. The reveal-fade that used to live here never ran, because
+   Nav.astro's scoped .site-header rule carries the astro-cid attribute and so
+   outranks a bare class. */
 
 .profile {
   opacity: 0;
@@ -723,20 +750,27 @@
   animation: reveal-up var(--dur-base) var(--ease-out-quart) both;
 }
 
+/* Four cells, four delays. These used to stop at three while the markup had
+   four, so the fourth cell inherited a 0s delay and landed first, ahead of the
+   three that were supposed to precede it. Each cell's delay matches the delay
+   passed to its Counter in index.astro, so the figure starts counting as the
+   cell that holds it arrives. */
 .stats > li:nth-child(1) { animation-delay: 520ms; }
-.stats > li:nth-child(2) { animation-delay: 690ms; }
+.stats > li:nth-child(2) { animation-delay: 630ms; }
 .stats > li:nth-child(3) { animation-delay: 740ms; }
+.stats > li:nth-child(4) { animation-delay: 850ms; }
 
-/* The figures wipe rather than count up. Counting needs JavaScript, screen
-   readers read the intermediate values, and it is a cliche. */
+/* The wipe uncovers the figure. The digits themselves count on the scroll of
+   their own registered property, in Counter.astro. */
 .stat-value {
   clip-path: inset(0 0 100% 0);
   animation: wipe-up var(--dur-base) var(--ease-out-expo) both;
 }
 
-.stats > li:nth-child(1) .stat-value { animation-delay: 580ms; }
-.stats > li:nth-child(2) .stat-value { animation-delay: 690ms; }
-.stats > li:nth-child(3) .stat-value { animation-delay: 800ms; }
+.stats > li:nth-child(1) .stat-value { animation-delay: 520ms; }
+.stats > li:nth-child(2) .stat-value { animation-delay: 630ms; }
+.stats > li:nth-child(3) .stat-value { animation-delay: 740ms; }
+.stats > li:nth-child(4) .stat-value { animation-delay: 850ms; }
 
 .focus > * {
   opacity: 0;
@@ -798,8 +832,13 @@
   .skills .item:nth-child(4n + 4),
   .skills .specialist .chip:nth-child(4n + 4) { animation-range: entry 28% entry 88%; }
 
-  /* Technique 3, blur to sharp. Images only: blurred text looks broken. */
-  .project-card .art img {
+  /* Technique 3, blur to sharp. Images only: blurred text looks broken.
+     This sits on the .screen wrapper rather than the img so that the img is
+     left free for the hover zoom. An animation with fill-mode both owns the
+     properties it names for good, so a transform animation here would silently
+     beat any transform transition the hover tried to run on the same element.
+     One element per clock. */
+  .project-card .art .screen {
     opacity: 0;
     filter: blur(12px);
     transform: scale(1.04);
@@ -862,9 +901,23 @@
   .card-grid > *:nth-child(4n + 4),
   .rows > .row:nth-child(4n + 4) { animation-range: entry 28% entry 88%; }
 
-  /* The hero grids are on the time clock, not the scroll clock. */
-  .focus > * {
+  /* The hero grid is on the time clock, not the scroll clock. Restoring the
+     timeline alone is not enough: .card-grid > * above re-declares the
+     animation shorthand, which resets duration to 0s and easing to linear, and
+     both selectors are (0,1,0) so source order decides. With the timeline back
+     on auto a 0s duration means the cards snapped into place after their delay
+     instead of easing in. Duration and easing have to come back too.
+
+     .card-grid.focus rather than .focus, so this matches the specificity of
+     the nth-child stagger rules above and can clear the ranges they set. A
+     range on a time clock is inert rather than harmful, but leaving one in
+     place is how the next person comes to read a time-based animation as
+     scroll-driven. */
+  .card-grid.focus > * {
     animation-timeline: auto;
+    animation-duration: var(--dur-base);
+    animation-timing-function: var(--ease-out-quart);
+    animation-range: normal;
   }
 
   /* Last screen. An element near the bottom of a short page can never complete
@@ -899,29 +952,122 @@
   pointer-events: none;
 }
 
-/* ---- Micro-interactions ------------------------------------------------- */
-/* Every hover state below also fires on :focus-visible. */
+/* ---- Hover and press ---------------------------------------------------- */
+/* Hover is a gesture, not a property change. Each of these moves three or four
+   things on one duration and one easing so they read as a single response.
+   The easing is always --ease-spring here and nowhere else on the site.
 
+   Containers use :has(:focus-visible) rather than :focus-within, so a keyboard
+   user gets the whole gesture and a mouse user who clicks a link inside a card
+   does not get a hover state stuck on after the pointer leaves. Focusable
+   elements use :focus-visible directly. */
+
+/* The lift is on translate, not transform. Every card on the site is also a
+   reveal target, and reveal-up has animation-fill-mode: both, so the animation
+   owns transform for good once it has finished: an animated value beats a
+   normal declaration in the cascade no matter what the specificity is. The
+   lift written as transform simply never appeared. translate is a separate
+   property that composes with transform rather than competing with it.
+
+   Do not put transform in the same rule as translate or scale anywhere in this
+   file. Lightning CSS, which @tailwindcss/vite runs over the stylesheet
+   regardless of the cssMinify setting in astro.config.mjs, folds the three
+   into a single transform declaration. That is only equivalent if nothing else
+   sets scale or translate, and here things do. It happens with minify off as
+   well, so there is no setting to turn it off: keep them in separate rules. */
 .card {
-  transition: border-color var(--dur-fast) var(--ease-out-quart),
-    transform var(--dur-fast) var(--ease-out-quart);
+  transition: border-color var(--dur-fast) var(--ease-spring),
+    translate var(--dur-fast) var(--ease-spring);
 }
 
 .card:hover,
-.card:focus-within {
-  transform: translateY(-2px);
+.card:has(:focus-visible) {
+  translate: 0 -2px;
 }
 
 button {
-  transition: background-color var(--dur-fast) var(--ease-out-quart),
-    border-color var(--dur-fast) var(--ease-out-quart),
-    color var(--dur-fast) var(--ease-out-quart),
-    transform var(--dur-micro) var(--ease-out-quart);
+  position: relative;
+  overflow: hidden;
+  transition: background-color var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) var(--ease-spring),
+    color var(--dur-fast) var(--ease-spring),
+    scale var(--dur-micro) var(--ease-spring);
 }
 
 button:hover,
 button:focus-visible {
   background-color: var(--color-plot-soft);
+}
+
+/* scale rather than transform, so it cannot collide with anything a button's
+   own component stylesheet puts on transform. */
+button:active {
+  scale: 0.98;
+}
+
+/* A 45 degree beam crossing once per hover. The pseudo-element sits above the
+   label at 1px of alpha, so it never touches contrast. It is keyed off a
+   registered property rather than background-position so it interpolates
+   smoothly and stays off the main thread. */
+@property --sweep {
+  syntax: '<percentage>';
+  initial-value: -60%;
+  inherits: false;
+}
+
+button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    45deg,
+    transparent calc(var(--sweep) - 18%),
+    color-mix(in oklab, var(--color-plot) 22%, transparent) var(--sweep),
+    transparent calc(var(--sweep) + 18%)
+  );
+}
+
+button:hover::after,
+button:focus-visible::after {
+  opacity: 1;
+  /* The beam is the one hover effect that is not eased with the spring. The
+     spring belongs to state changes, where overshoot reads as the thing
+     settling into place. This is a traversal: a light source crossing the
+     button at constant speed. Overshoot here would run the beam off the right
+     edge and pull it back, which reads as a bug. */
+  animation: sweep var(--dur-slow) linear 1;
+}
+
+@keyframes sweep {
+  from { --sweep: -60%; }
+  to { --sweep: 160%; }
+}
+
+/* Nav links. An underline that grows from the left, not a colour change: the
+   colour change moved the link's weight against its neighbours and made the
+   pill look like it was reflowing when it was not. */
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 5px;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 240ms var(--ease-spring);
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
 }
 
 button:active {
@@ -956,6 +1102,7 @@ button:active {
   .display-lede,
   .skills .item,
   .skills .specialist .chip,
+  .project-card .art .screen,
   .project-card .art img,
   .prose .data-table {
     opacity: 1 !important;
@@ -971,8 +1118,51 @@ button:active {
   .site-header,
   .home-link,
   .counter-group,
-  .marquee-track {
+  .marquee-track,
+  .beam .art img,
+  button::after {
     animation: none !important;
+  }
+
+  /* The hover states still change, they just change instantly: the blanket
+     transition-duration above handles that. What has to go is anything that
+     moves geometry, because that is motion whether or not it was asked for.
+
+     Every rule below resets exactly one of transform, scale or translate and
+     never two in one block. Lightning CSS folds the three together into a
+     single transform declaration when it finds them in the same rule, and that
+     fold silently drops the reset for the other two. See the note above .card
+     for the full explanation. */
+  .project-card:hover,
+  .project-card:has(:focus-visible),
+  .card:hover,
+  .card:has(:focus-visible) {
+    translate: none !important;
+  }
+
+  .stat-cell:hover,
+  .stat-cell:has(:focus-visible) {
+    scale: none !important;
+  }
+
+  .project-card:hover .art img,
+  .project-card:has(:focus-visible) .art img,
+  .item:hover .glyph,
+  .item:has(:focus-visible) .glyph {
+    scale: none !important;
+  }
+
+  .project-card:hover .more a::after,
+  .project-card:has(:focus-visible) .more a::after {
+    translate: none !important;
+  }
+
+  /* The nav underline is left alone. It is a state change, not motion: the
+     blanket transition-duration collapses the grow to nothing, and the
+     underline still has to appear so the affordance survives. */
+
+  button::after {
+    display: none;
   }
 }
 
@@ -1001,8 +1191,23 @@ button:active {
 }
 
 @supports (animation-timeline: view()) {
-  /* 3. Text shimmer, the h1 only, driven by scroll. background-clip: text on
-     the mask inner span, so the sweep travels the whole two-line heading. */
+  /* 3. Text shimmer, the h1 only. Both of this element's animations are on the
+     time clock, and that is the fix for two separate bugs the audit found.
+
+     The shimmer was on scroll(root block) over 0% 100%, which is the whole
+     document. Measured on a 6,093px home page: --shimmer had not moved at all
+     by 10% scroll and only reached its end at the very bottom. A sweep that
+     needs the entire page to cross two lines of type is not a sweep.
+
+     The mask reveal was worse. It was on view() entry 15% to entry 85%, and
+     the h1 is above the fold on every page on the site. An element already in
+     view has finished its entry range before the first frame, so line-up was
+     pinned at its end state and the hero heading never animated: measured
+     identity transform at 39ms and still identity at 1650ms.
+
+     view() cannot drive anything that is above the fold at load, and there is
+     no scroller argument to reach for. Above the fold, the time clock is the
+     only clock, which is the same reason word illumination is time-based. */
   .display .line-in {
     background-image: linear-gradient(
       100deg,
@@ -1014,9 +1219,17 @@ button:active {
     -webkit-background-clip: text;
     color: transparent;
     animation-name: line-up, shimmer;
-    animation-timeline: view(), scroll(root block);
-    animation-range: entry 15% entry 85%, 0% 100%;
+    animation-timeline: auto, auto;
+    animation-duration: var(--dur-slow), var(--dur-hero);
+    animation-timing-function: var(--ease-out-expo), var(--ease-out-quart);
+    animation-fill-mode: both, both;
+    animation-iteration-count: 1, 1;
   }
+
+  /* The sweep starts as the second line lands, so the two read as one gesture
+     rather than two events. */
+  .display .line:nth-child(1) .line-in { animation-delay: 200ms, 620ms; }
+  .display .line:nth-child(2) .line-in { animation-delay: 280ms, 700ms; }
 
   /* The ghosted second line keeps its own colour; only the solid line sweeps. */
   .display .ghost .line-in {
@@ -1046,6 +1259,68 @@ button:active {
   }
 }
 
+/* ---- Project card hover, four things on one clock ------------------------ */
+/* 320ms, --ease-spring, all four starting together: the image zooms and
+   saturates inside its frame, the card lifts 3px, the border takes the accent
+   colour (from .card above), and the case study arrow nudges right.
+
+   scale and translate are used as independent transform properties rather than
+   through the transform shorthand. The card's own lift is on transform, the
+   zoom is on scale and the Ken Burns pan is on translate, so three effects
+   compose on the same subtree with nothing overwriting anything. */
+
+.project-card:hover,
+.project-card:has(:focus-visible) {
+  translate: 0 -3px;
+}
+
+.project-card .art img {
+  scale: 1;
+  filter: saturate(0.92);
+  transition: scale var(--dur-fast) var(--ease-spring),
+    filter var(--dur-fast) var(--ease-spring);
+}
+
+.project-card:hover .art img,
+.project-card:has(:focus-visible) .art img {
+  scale: 1.06;
+  filter: saturate(1);
+}
+
+/* The arrow. padding-right reserves the 5px it travels into, so the nudge
+   cannot push the second link on the row or wrap it to a new line. */
+.project-card .more a::after {
+  content: "\2192";
+  display: inline-block;
+  margin-left: 0.4em;
+  transition: translate var(--dur-fast) var(--ease-spring);
+}
+
+.project-card .more a {
+  padding-right: 5px;
+}
+
+.project-card:hover .more a::after,
+.project-card:has(:focus-visible) .more a::after {
+  translate: 5px 0;
+}
+
+/* Ken Burns, the Sieve card only, and only while hovered. Six seconds is slow
+   enough to read as the image breathing rather than as a pan. */
+.beam:hover .art img,
+.beam:has(:focus-visible) .art img {
+  /* Linear, for the same reason as the button beam: a pan is a traversal, and
+     an eased pan does most of its travel in the first second and then crawls,
+     which is the opposite of what a slow pan is for. */
+  animation: ken-burns 6s linear both;
+}
+
+@keyframes ken-burns {
+  to {
+    translate: -3% 0;
+  }
+}
+
 /* 6. Spotlight. --mx and --my are written by a rAF-throttled pointermove
    listener; with no JavaScript the layer simply never becomes visible. */
 .project-card {
@@ -1065,11 +1340,11 @@ button:active {
     var(--color-plot-soft),
     transparent 70%
   );
-  transition: opacity var(--dur-fast) var(--ease-out-quart);
+  transition: opacity var(--dur-fast) var(--ease-spring);
 }
 
 .project-card:hover::before,
-.project-card:focus-within::before {
+.project-card:has(:focus-visible)::before {
   opacity: 1;
 }
 
@@ -1096,7 +1371,13 @@ button:active {
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   pointer-events: none;
-  animation: beam 4s linear infinite;
+  /* Three passes, then it stops. It was infinite, which made it a heartbeat:
+     a thing that never stops moving stops meaning anything, and a permanent
+     animation next to a page about measurement discipline reads as decoration.
+     Three passes is long enough to be noticed and short enough to be over.
+     Linear because a rotating sweep at constant angular speed is what reads as
+     a sweep; easing it would make it lurch once per revolution. */
+  animation: beam 2.4s linear 3;
 }
 
 @property --beam-angle {

@@ -20,11 +20,12 @@ const { as: Tag = 'div', class: className }: Props = Astro.props;
     border-radius: var(--radius-card);
     background-color: var(--color-paper);
     padding: 24px;
-    transition: border-color 120ms;
+    /* The lift and the shared duration are in global.css, so the border and
+       the transform arrive together rather than the border finishing first. */
   }
 
   .card:hover,
-  .card:focus-within {
+  .card:has(:focus-visible) {
     border-color: var(--color-plot);
   }
 </style>

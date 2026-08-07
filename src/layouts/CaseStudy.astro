@@ -171,6 +171,31 @@ const meta = [
     padding-block: 0.5rem;
   }
 
+  /* The index panel animates open and closed with no measuring script.
+     A height transition normally needs JavaScript because auto is a keyword
+     and keywords do not interpolate; interpolate-size: allow-keywords, set on
+     :root in global.css, makes auto animatable, and ::details-content gives a
+     box to put the height on without wrapping the content in a div.
+
+     Guarded on both features and never load-bearing: the [open] rule sets
+     block-size back to auto unconditionally, so the worst case in a browser
+     that has one feature and not the other is a panel that snaps open, which
+     is what it did before. There is no state where the sections list is
+     unreachable. */
+  @supports (interpolate-size: allow-keywords) and selector(::details-content) {
+    .rail-index::details-content {
+      block-size: 0;
+      overflow: hidden;
+      transition: block-size var(--dur-fast) var(--ease-in-quart),
+        content-visibility var(--dur-fast) allow-discrete;
+    }
+
+    .rail-index[open]::details-content {
+      block-size: auto;
+      transition-timing-function: var(--ease-out-quart);
+    }
+  }
+
   .rail-list {
     list-style: none;
     margin: 0.5rem 0 0;

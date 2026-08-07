@@ -165,6 +165,9 @@ const highlight = showMeasurement ? highlights[entry.id] : undefined;
 
   .screen {
     display: block;
+    /* The zoom happens inside this frame, so the card itself never resizes and
+       nothing below it reflows. */
+    overflow: hidden;
   }
 
   .art :global(img),
@@ -174,6 +177,11 @@ const highlight = showMeasurement ? highlights[entry.id] : undefined;
     aspect-ratio: 16 / 9;
     height: auto;
   }
+
+  /* The hover gesture itself is in global.css. .beam is set on the Card
+     component's root element rather than on anything this file renders, so a
+     scoped selector for it would be relying on class-prop scope propagation to
+     reach an element another component owns. Global is where it belongs. */
 
   .art-empty {
     background-color: var(--color-paper-2);

@@ -16,7 +16,7 @@ const items = [
 const path = Astro.url.pathname;
 const isCurrent = (href: string) => path === href || path === `${href}/` || path.startsWith(`${href}/`);
 ---
-<header class="site-header hero-nav">
+<header class="site-header">
   <a href="/" class="home-link t-label">Kishan Prajapati</a>
 
   <button id="nav-toggle" type="button" class="nav-toggle t-label" aria-expanded="false" aria-controls="site-nav">
@@ -146,10 +146,9 @@ const isCurrent = (href: string) => path === href || path === `${href}/` || path
     border-radius: 999px;
   }
 
-  .nav-link:hover,
-  .nav-link:focus-visible {
-    color: var(--color-ink);
-  }
+  /* No colour change on hover. The underline in global.css is the affordance:
+     a colour shift on a monospaced label at this size reads as the weight
+     changing, which made the pill look like it was reflowing when it was not. */
 
   .nav-link[aria-current='page'] {
     background-color: var(--color-plot-soft);
@@ -180,6 +179,20 @@ const isCurrent = (href: string) => path === href || path === `${href}/` || path
       display: inline-block;
     }
 
+    /* Open and close both animate, with no opacity-and-visibility hack and no
+       JavaScript beyond the class toggle that was already here.
+
+       display is a discrete property: it has no in-between values, so a
+       transition would normally flip it at the start and there would be
+       nothing to watch on the way out. transition-behavior: allow-discrete
+       holds the old value for the length of the transition instead, which
+       keeps the panel painted while it fades away. @starting-style supplies
+       the other half: the values to animate *from* the first time the element
+       is rendered with display something other than none, which is the frame
+       a plain transition has no previous value for.
+
+       Exits use ease-in and entrances use ease-out, so the panel accelerates
+       away and lands softly. */
     .pill {
       display: none;
       width: 100%;
@@ -187,10 +200,25 @@ const isCurrent = (href: string) => path === href || path === `${href}/` || path
       align-items: stretch;
       border-radius: var(--radius-card);
       padding: 12px;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity var(--dur-fast) var(--ease-in-quart),
+        transform var(--dur-fast) var(--ease-in-quart),
+        display var(--dur-fast) allow-discrete;
     }
 
     .pill.open {
       display: flex;
+      opacity: 1;
+      transform: none;
+      transition-timing-function: var(--ease-out-quart);
+    }
+
+    @starting-style {
+      .pill.open {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
     }
 
     .nav-list {

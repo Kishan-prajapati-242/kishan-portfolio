@@ -370,37 +370,74 @@ last-screen range to the entire page, so the rule targets
 ### Tokens
 
 ```css
+--ease-spring:    linear(0, 0.18, 0.42, 0.72, 0.95, 1.06, 1.04, 1.01, 0.99, 1);
 --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
---dur-micro: 160ms;
---dur-fast:  240ms;
---dur-base:  420ms;
---dur-slow:  700ms;
---dur-hero:  900ms;
+--ease-in-quart:  cubic-bezier(0.5, 0, 0.75, 0);
+--dur-micro: 200ms;
+--dur-fast:  320ms;
+--dur-base:  600ms;
+--dur-slow:  1000ms;
+--dur-hero:  1300ms;
 ```
 
 Text moves 16px, cards move 24px, nothing moves more than 32px. Long travel
-reads as cheap and feels laggy. Stagger siblings 70ms apart on the time clock,
-maximum five in a chain, then reset.
+reads as cheap and feels laggy. Stagger siblings 110ms apart on the time clock,
+maximum four in a chain, then reset.
+
+### The easing rule
+
+One rule decides which easing anything gets. There are no exceptions on
+judgement, only the two written below.
+
+| kind | easing | why |
+|---|---|---|
+| entrance | `--ease-out-quart` or `--ease-out-expo` | fast start, slow landing |
+| exit | `--ease-in-quart` | the element accelerates away |
+| hover, press | `--ease-spring` | and nowhere else |
+| scroll-driven | `linear` | scroll position is already the easing |
+
+`cubic-bezier` is a curve whose control points are constrained to the unit
+square on the output axis, so it cannot return a value above 1 and cannot
+overshoot. No arrangement of the handles produces a settle. That is the reason
+hovers built on it feel flat, and it is why the spring is a `linear()` ramp
+instead: an explicit list of output samples, under no such constraint, peaking
+at 1.06 and settling through 0.99.
+
+**Verified supported**, and verified to degrade safely. `CSS.supports` reports
+`true` for `linear()` in the test engine. Where it is not supported, the
+`var()` substitution makes the declaration invalid at computed value time and
+`transition-timing-function` falls back to its initial value, `ease`: measured,
+not assumed. Hovers still animate, without the overshoot.
+
+Two things triggered by hover are deliberately **not** sprung, because they are
+traversals rather than state changes: the button beam and the Ken Burns pan.
+A light source crossing a button and a slow pan across a photograph both move
+at constant speed. Overshoot would run the beam off the right edge and pull it
+back, which reads as a bug rather than as physics.
 
 ### Page load sequence
 
 | at | element | motion |
 |---|---|---|
-| 0ms | nav | fade only, no movement |
+| 0ms | nav | none. It is persistent chrome and carries `transition:persist` |
 | 0ms | sidebar card | fade and 16px rise, `--dur-slow`, `--ease-out-expo` |
 | 120ms | portrait | `clip-path` wipe from `inset(0 0 100% 0)`, `--dur-slow` |
 | 200ms | `h1` | per-line mask reveal, 80ms between lines, `--dur-slow` |
-| 420ms | lede | fade and 16px rise, `--dur-base` |
-| 520ms | three stats | 70ms stagger, fade and 16px rise |
-| 560ms | stat figures | `clip-path` wipe from the bottom |
-| 680ms | capability cards | 70ms stagger |
+| 420ms | lede | fade and 16px rise, `--dur-base`, words illuminate on a 40ms step |
+| 520ms | four stats | 110ms stagger, fade and 16px rise |
+| 520ms | stat figures | `clip-path` wipe, then the digits count |
+| 620ms | `h1` shimmer | one sweep, `--dur-hero`, starting as the second line lands |
+| 760ms | capability cards | 110ms stagger |
 
 The portrait uses `clip-path` rather than `width` so the reveal is independent
 of the image dimensions and stays on the compositor.
 
-**The figures do not count up.** Counting needs JavaScript, screen readers read
-the intermediate values, and it is a cliche. They wipe instead.
+**The stat delays are per cell and there are four of them.** Each cell's delay
+matches the delay passed to its `Counter`, so the figure starts counting as the
+cell holding it arrives. The chain used to stop at three while the markup had
+four, which left the fourth cell on a 0s delay: it landed first, ahead of the
+three meant to precede it.
 
 ### Scroll reveals, per element
 
@@ -518,10 +555,68 @@ animated beams between elements, retro-grid or dot-pattern backgrounds,
 scrollytelling pinned scenes, gooey SVG filter morphs, scroll-driven rotation,
 image-sequence scrubbing, and marquees of anything other than the skills icons.
 
+Pass three adds, all rejected for the same reasons: 3D card flips, ripple from
+pointer, chromatic aberration, neon glow, glassmorphism, neumorphic depth,
+cursor trails, jelly bounce, liquid fill, per-letter hover waves, equalizer
+bars, image swap on hover, grayscale to colour, spinning avatars, and
+`clip-path` morphs.
+
 The test, so the same judgement can be applied to anything not listed: a
 technique is out if it is cliché, hurts screen readers, is heavy, is
 off-palette, or reads as junior on a portfolio whose selling point is
 engineering judgement. Failing any one of those is enough.
+
+The sharper version of the same question, and the one that decides the close
+calls: **does it survive being seen fifty times by someone reading the site
+properly?** A tilt effect is delightful once and nauseating on the fifth card.
+Anything that draws attention to itself rather than to the content is out. This
+is also why the border beam now stops after three passes and why the word
+illumination appears exactly once on the site.
+
+### The audit, and what it found
+
+`scripts/audit-motion.mjs` loads every route and reads back what the browser
+actually resolves for each animated selector: keyframes, duration, iteration
+count, delay, timeline and range. It exists because source order and Astro's
+scoped-style specificity mean the declaration you can read in the file is not
+always the one that wins, and because none of the five bugs below were visible
+in a screenshot.
+
+Run it against the built output, not the dev server:
+
+```sh
+npm run build && npx serve dist -l 4321
+node scripts/audit-motion.mjs
+node scripts/verify-hover.mjs
+```
+
+It flags four shapes: an animation on the time clock with a 0s duration, an
+`animation-range` on a time clock where it is inert, an infinite iteration
+count, and `scroll(root)` over the full document. Two things legitimately break
+those rules and are named in an allowlist in the script, so anything else with
+the same shape is a real finding. They are the skills marquee, the only
+permitted infinite loop on the site, and the scroll progress bar, the only thing
+whose subject genuinely is the whole document.
+
+| what | before | after |
+|---|---|---|
+| `h1` mask reveal | `view()`, `entry 15%` to `entry 85%`. The `h1` is above the fold on every page, so the entry range was already complete on the first frame and the animation was pinned at its end state. Measured identity transform at 39ms and still identity at 1650ms: **it had never run** | time clock, `--dur-slow`, `--ease-out-expo`. Measured 121px, 50px, 2.7px, 0 |
+| `h1` shimmer | `scroll(root block)`, `0%` to `100%`, the whole 6,093px document. Measured: no movement at all by 10% scroll, completing only at the very bottom. This was the "too slow" complaint | time clock, `--dur-hero`, one sweep, complete by 1.9s |
+| capability cards | 0s duration. `.card-grid > *` re-declares the `animation` shorthand, which resets duration to 0s and easing to linear; `.focus > *` then restored `animation-timeline: auto` but not the duration, so the cards snapped after their delay | `--dur-base`, `--ease-out-quart`, and the inert range cleared |
+| stat cells | four cells, three `nth-child` delays. The fourth inherited 0s and landed first | four delays, matching each cell's `Counter` |
+| border beam | `4s linear infinite` | `2.4s linear 3`, then it stops |
+| header fade | dead rule. `.hero-nav` is `(0,1,0)`; Nav.astro's scoped `.site-header` carries the astro-cid attribute and outranks it, so the header ran `nav-shrink` and never faded | removed, along with the class. It is persistent chrome and should not fade in on every navigation |
+
+The beam is a spotlight, not a heartbeat. Something that never stops moving
+stops meaning anything, and a permanent animation on a site about measurement
+discipline reads as decoration. Three passes is long enough to be noticed and
+short enough to be over. Confirmed by measurement: 9 seconds after load, with no
+scrolling, the marquee is the only thing still running on the time clock.
+
+**Three reveal classes are declared and unused.** `.reveal`, `.reveal-text` and
+`.reveal-label` appear zero times in the built markup across all twelve routes.
+They are kept as the documented escape hatch for new markup, and noted here so
+the next person does not read them as live.
 
 ### Scroll progress
 
@@ -529,16 +624,94 @@ A 2px bar fixed to the top of the viewport in `--color-plot`, `scaleX` 0 to 1
 on `animation-timeline: scroll(root block)`. One rule, no JavaScript,
 `aria-hidden`.
 
-### Micro-interactions
+### The hover system
 
-Cards: border to `--color-plot` over `--dur-fast` plus `translateY(-2px)`. No
-shadow, no scale, no lift beyond 2px. Links: 1px to 2px underline over
-`--dur-micro`. Buttons: background fill over `--dur-fast`, and `scale(0.98)` on
-`:active` over `--dur-micro` so a click feels physical. Social icons:
-`--color-ink-2` to `--color-plot` over `--dur-micro`.
+A hover is a gesture, not a property change. Each of these moves three or four
+things on one duration and one easing so they read as a single response. All of
+them run at `--dur-fast` on `--ease-spring` with a 0s delay, which is what makes
+them arrive together rather than in sequence. A stagger inside a hover says "a
+sequence is starting"; a hover is a direct answer to the pointer.
 
-**Every hover state also fires on `:focus-visible`.** A keyboard user gets the
-same feedback.
+| element | what moves |
+|---|---|
+| project card | image `scale(1.06)` inside the frame, card `translate` -3px, border to `--color-plot`, arrow nudges 5px, image `saturate(0.92)` to `saturate(1)` |
+| Sieve card, additionally | Ken Burns pan, `translate` 0 to -3%, 6s, linear, only while hovered |
+| skill item | icon `scale(1.18)` and to `--color-plot`, label `--color-ink-3` to `--color-ink` |
+| nav link | underline via `::after`, `scaleX` 0 to 1, origin left, 240ms |
+| button | 45 degree beam sweeping across once, plus `scale(0.98)` on `:active` |
+| stat cell | `scale(1.02)` plus a 1px inset highlight |
+| inline prose link | underline thickening, and nothing else |
+
+Prose links stay plain on purpose. A link that does tricks is irritating to read
+past, and body copy is full of them.
+
+**The image zooms, the card does not resize.** The zoom happens on the `<img>`
+inside `.screen`, which is `overflow: hidden`, so nothing below the card
+reflows. `padding-right` on the case study link reserves the 5px the arrow
+travels into, for the same reason.
+
+**Every hover fires on keyboard focus.** Containers use `:has(:focus-visible)`
+rather than `:focus-within`: a keyboard user gets the whole gesture, and a mouse
+user who clicks a link inside a card does not get a hover state stuck on after
+the pointer leaves. Focusable elements use `:focus-visible` directly. Skill
+items are the one exception, and honestly so: they are not interactive, there is
+nothing to focus, and adding forty tab stops of non-interactive content to make
+a selector fire would be an accessibility regression rather than a fix.
+
+#### The property collision, and the Lightning CSS trap
+
+Two rules, both learned by measuring rather than reading.
+
+**An animation with `fill-mode: both` owns the properties it names, for good.**
+Animated values sit above normal declarations in the cascade, so no specificity
+saves a hover. Every card on this site is also a reveal target, and `reveal-up`
+ends at `transform: none`, so the card lift written as `transform` never
+appeared at all. The lift is on `translate`, the zoom is on `scale`, and the
+pan is on `translate` on a different element. `translate`, `rotate` and `scale`
+are independent properties that compose with `transform` rather than competing
+with it, which is what lets three effects run on one subtree.
+
+**Never put `transform` in the same rule as `scale` or `translate`.** Lightning
+CSS folds the three into a single `transform` declaration. That is only
+equivalent when nothing else sets `scale` or `translate`, and here things do, so
+the fold silently drops two of the three resets. It cost the whole reduced
+motion block: `transform: none; scale: none; translate: none` came out as
+`transform: scale(1) translate(0)`, and every hover stayed live under
+`prefers-reduced-motion`.
+
+Two things make this hard to find. Lightning CSS runs via `@tailwindcss/vite`
+regardless of `vite.build.cssMinify` in `astro.config.mjs`, so the `esbuild` pin
+that fixed the `animation-timeline` fold does not cover it. And it happens with
+minification off as well, so it is a normalisation rather than an optimisation
+and there is no setting to disable. Keep them in separate rules. Rules with
+identical selectors get merged first, so separate rules with the *same* selector
+are not enough either.
+
+### Modern CSS in place of script
+
+**`@starting-style` with `transition-behavior: allow-discrete`** for the mobile
+nav, so open and close both animate with no opacity-and-visibility hack.
+`display` is discrete and has no in-between values, so a plain transition flips
+it at the start and there is nothing to watch on the way out. `allow-discrete`
+holds the old value for the length of the transition, which keeps the panel
+painted while it fades away; `@starting-style` supplies the values to animate
+*from* on the first frame the element is rendered with a `display` other than
+`none`, which a plain transition has no previous value for. Exit uses
+`--ease-in-quart`, entrance `--ease-out-quart`.
+
+**`interpolate-size: allow-keywords`** on `:root`, so the case study rail's
+`<details>` animates to `height: auto` through `::details-content` with no
+measuring script. Guarded on both features and never load bearing: the `[open]`
+rule sets `block-size: auto` unconditionally, so the worst case in a browser
+with one feature and not the other is a panel that snaps open, which is what it
+did before. There is no state in which the sections list is unreachable.
+
+**Neither changed the JavaScript byte count**, and the honest reason is that
+neither replaced JavaScript in this codebase. `@starting-style` replaced a CSS
+hack, and the class toggle it animates is still needed to mark the open state.
+There was never a measuring script on the rail: the panel simply snapped.
+Measured 6,533 bytes gzipped on the worst route before and after, byte for byte
+identical on all twelve routes.
 
 ### Page transitions
 
@@ -576,6 +749,16 @@ Three things it breaks, all handled:
 reduced-motion user can be left with an element frozen in its scroll-driven
 start state, which means invisible. The reset list also names every element
 that carries a hidden start state, not just `.reveal`.
+
+The hover states still change under reduced motion, they just change instantly:
+the blanket `transition-duration` handles that, and the affordance has to
+survive or the site becomes harder to use for the people the rule protects. What
+is removed is anything that moves geometry. Each of those resets touches exactly
+one of `transform`, `scale` or `translate` and never two in one block, for the
+Lightning CSS reason above. Verified by hovering every interactive element under
+`prefers-reduced-motion: reduce` and reading the computed values back: card does
+not lift, image does not zoom or pan, arrow does not nudge, stat cell does not
+scale, button beam is gone, marquee and border beam are static.
 
 Text is present in the DOM and readable at all times, never `opacity: 0` with
 no fallback. Mask reveals keep the text in flow, which is why they are

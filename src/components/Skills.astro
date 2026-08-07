@@ -109,29 +109,33 @@ const specialist = [
     padding: 0;
   }
 
+  /* No stagger on hover. A stagger says "a sequence is starting"; this is a
+     direct response to the pointer and everything in it moves at once. */
   .item {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     font-size: 1rem;
-    color: var(--color-ink-2);
-    transition: color var(--dur-micro) var(--ease-out-quart);
+    color: var(--color-ink-3);
+    transition: color var(--dur-micro) var(--ease-spring);
   }
 
   .item:hover,
-  .item:focus-within {
-    color: var(--color-plot);
+  .item:has(:focus-visible) {
+    color: var(--color-ink);
   }
 
   .glyph {
     flex: none;
     color: var(--color-ink-2);
-    transition: color var(--dur-micro) var(--ease-out-quart);
+    transition: color var(--dur-micro) var(--ease-spring),
+      scale var(--dur-micro) var(--ease-spring);
   }
 
   .item:hover .glyph,
-  .item:focus-within .glyph {
+  .item:has(:focus-visible) .glyph {
     color: var(--color-plot);
+    scale: 1.18;
   }
 
   /* Items the icon set has no mark for. */
