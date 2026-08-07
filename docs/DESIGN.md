@@ -194,6 +194,8 @@ Per D-045 the site is built from containers rather than one continuous scroll. T
 
 **Chips:** label role, 1px `--color-grid` border, `2px` radius, `4px` by `8px` padding. Status first, then up to four stack items.
 
+**Skill marks** are real Simple Icons paths, vendored into `src/data/icons.ts` by `scripts/fetch-icons.mjs` so the build makes no network request. Monochrome `currentColor`, `--color-ink-2` resting and `--color-plot` on hover and focus. Anything the set has no mark for renders as a text chip; a generic mark is never substituted. SQL is currently the only one.
+
 **Where cards apply:** `/work` (Sieve and Gatekeepn't as full-width feature cards, the other three in a two-column grid above 900px, the four front-end repos staying a compact list), the home page (featured work as two cards, each measurement block in a card, the secondary facts row as one wide card), `/papers` (one card per paper), `/teaching` (one small card per appointment in a three-up grid, one card per named section), `/about` (education, work history, certifications), and the seven tables in the Sieve case study, each wrapped with its title in the label role at the top.
 
 **Where cards do not apply:** `/notes` stays flowing prose and tables, because that page is meant to be read straight through and boxing it would hurt it. The Sieve case study body also stays flowing; only its tables are wrapped.

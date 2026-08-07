@@ -245,3 +245,10 @@ Three of these numbers were reassigned. Where a number appears twice, the entry 
 - D-081: The counters run on the time clock, not a scroll timeline, because the stats sit above the fold where a `view()` timeline completes immediately. One keyframe block per stat with a literal target, since animating to `var()` inside keyframes is unreliable.
 - D-082: 182,853 is not a counter and has no CSS-only comma. `counter()` renders digits with no thousands separator, so it is left static rather than shipped as `182853`.
 - D-083: The case study's scoped `.prose h2` scroll-margin outranked the global rule, so anchor jumps landed under the pinned nav. It carries 6rem explicitly.
+
+## Real icons
+
+- D-084: Skill marks are real Simple Icons paths, not hand-authored generic marks. SPEC.md section 1 bans an icon component library, not inlined SVG path data, and a generic shape is unrecognisable as Docker. Supersedes D-080.
+- D-085: The paths are vendored into `src/data/icons.ts` by `scripts/fetch-icons.mjs` rather than fetched during `astro build`. Pinning them keeps builds reproducible and offline-capable, and keeps CI from depending on jsdelivr. `@latest` would otherwise let a mark change silently between two builds of the same commit. Re-run the script to refresh.
+- D-086: Licence recorded as CC0-1.0, read from the simple-icons package manifest rather than assumed. Version pinned at 16.28.0 in a comment.
+- D-087: SQL has no mark in the set and renders as a text chip. No generic mark is substituted for a missing icon: a wrong-looking mark is worse than an honest word.

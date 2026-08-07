@@ -2,10 +2,12 @@
 // CONTENT.md section 13. Four icon groups, then the Specialist group as text
 // chips with no icon, last.
 //
-// The glyphs are hand-authored generic marks, not brand logos: SPEC.md section
-// 1 bans an icon package, and hand-drawn approximations of thirty-two
-// trademarked logos would look wrong and be legally awkward. Each mark says
-// what kind of thing the item is, which is the honest signal.
+// Marks are real Simple Icons paths, vendored into src/data/icons.ts by
+// scripts/fetch-icons.mjs so the build makes no network request. Anything the
+// set has no mark for renders as a text chip. A generic mark is never
+// substituted: nobody recognises an abstract shape as Docker.
+import { ICONS } from '../data/icons';
+
 interface Props {
   full?: boolean;
 }
@@ -15,35 +17,19 @@ const { full = false }: Props = Astro.props;
 const groups = [
   {
     heading: 'Languages',
-    items: [
-      ['Python', 'braces'], ['TypeScript', 'markup'], ['JavaScript', 'markup'],
-      ['Java', 'braces'], ['C++', 'braces'], ['SQL', 'database'],
-      ['Bash', 'terminal'], ['HTML', 'markup'], ['CSS', 'markup'],
-    ],
+    items: ['Python', 'TypeScript', 'JavaScript', 'Java', 'C++', 'SQL', 'Bash', 'HTML', 'CSS'],
   },
   {
     heading: 'Backend and data',
-    items: [
-      ['FastAPI', 'server'], ['Flask', 'server'], ['Node.js', 'server'],
-      ['Express', 'server'], ['PostgreSQL', 'database'], ['MongoDB', 'database'],
-      ['Docker', 'container'], ['AWS', 'cloud'],
-    ],
+    items: ['FastAPI', 'Flask', 'Node.js', 'Express', 'PostgreSQL', 'MongoDB', 'Docker', 'AWS'],
   },
   {
     heading: 'ML and NLP',
-    items: [
-      ['PyTorch', 'network'], ['TensorFlow', 'network'],
-      ['Hugging Face Transformers', 'network'], ['scikit-learn', 'chart'],
-      ['NumPy', 'chart'], ['Pandas', 'chart'], ['Jupyter', 'notebook'],
-    ],
+    items: ['PyTorch', 'TensorFlow', 'Hugging Face Transformers', 'scikit-learn', 'NumPy', 'Pandas', 'Jupyter'],
   },
   {
     heading: 'Frontend and tools',
-    items: [
-      ['React', 'component'], ['Vite', 'component'], ['Redux', 'component'],
-      ['Tailwind', 'component'], ['Git', 'branch'], ['GitHub', 'branch'],
-      ['Linux', 'terminal'], ['LaTeX', 'document'],
-    ],
+    items: ['React', 'Vite', 'Redux', 'Tailwind', 'Git', 'GitHub', 'Linux', 'LaTeX'],
   },
 ];
 
@@ -52,75 +38,24 @@ const specialist = [
   'EASSE', 'SciSpaCy', 'pg_trgm', 'Reciprocal Rank Fusion',
 ];
 ---
-<svg width="0" height="0" aria-hidden="true" class="glyph-defs">
-  <defs>
-    <g id="g-braces" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M7 3.5C5.5 3.5 5.5 5 5.5 6.5S5.5 9.5 3.5 10s2 .5 2 2 0 3 1.5 3" />
-      <path d="M13 3.5c1.5 0 1.5 1.5 1.5 3s0 3 2 3.5-2 .5-2 2 0 3-1.5 3" />
-    </g>
-    <g id="g-markup" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M6.5 6 3 10l3.5 4" /><path d="M13.5 6 17 10l-3.5 4" />
-    </g>
-    <g id="g-terminal" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
-      <path d="m6 8 2.5 2L6 12" /><path d="M11 12.5h3" />
-    </g>
-    <g id="g-database" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <ellipse cx="10" cy="5" rx="6" ry="2.5" />
-      <path d="M4 5v10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V5" /><path d="M4 10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5" />
-    </g>
-    <g id="g-server" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="2.5" y="3.5" width="15" height="5.5" rx="1.5" />
-      <rect x="2.5" y="11" width="15" height="5.5" rx="1.5" />
-      <path d="M5.5 6.25h.01M5.5 13.75h.01" />
-    </g>
-    <g id="g-container" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M10 2.5 17 6v8l-7 3.5L3 14V6z" /><path d="M3 6l7 3.5L17 6" /><path d="M10 9.5v8" />
-    </g>
-    <g id="g-cloud" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M6 15.5a4 4 0 0 1-.4-7.98A5 5 0 0 1 15 8.2a3.65 3.65 0 0 1-.6 7.3z" />
-    </g>
-    <g id="g-network" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="4.5" cy="10" r="2" /><circle cx="15.5" cy="5" r="2" /><circle cx="15.5" cy="15" r="2" />
-      <path d="M6.3 9.1 13.7 5.9M6.3 10.9l7.4 3.2" />
-    </g>
-    <g id="g-chart" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 17V3" /><path d="M3 17h14" />
-      <path d="M6.5 14V9M10 14V5.5M13.5 14v-3" />
-    </g>
-    <g id="g-notebook" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="4" y="2.5" width="12.5" height="15" rx="1.5" /><path d="M4 6.5H2.5M4 10H2.5M4 13.5H2.5" />
-    </g>
-    <g id="g-component" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="2.5" y="2.5" width="6.5" height="6.5" rx="1.5" />
-      <rect x="11" y="2.5" width="6.5" height="6.5" rx="1.5" />
-      <rect x="2.5" y="11" width="6.5" height="6.5" rx="1.5" />
-      <rect x="11" y="11" width="6.5" height="6.5" rx="1.5" />
-    </g>
-    <g id="g-branch" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="5.5" cy="4.5" r="2" /><circle cx="5.5" cy="15.5" r="2" /><circle cx="14.5" cy="7.5" r="2" />
-      <path d="M5.5 6.5v7" /><path d="M12.6 8.6a5 5 0 0 1-5.2 4.6" />
-    </g>
-    <g id="g-document" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M11 2.5H5.5A1.5 1.5 0 0 0 4 4v12a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 16 16V7.5z" />
-      <path d="M11 2.5v5h5" /><path d="M7 11.5h6M7 14.5h4" />
-    </g>
-  </defs>
-</svg>
-
 <div class="skills">
   {groups.map((group) => (
     <section class="group">
       <h3 class="group-heading t-label">{group.heading}</h3>
       <ul class="items">
-        {group.items.map(([label, glyph]) => (
-          <li class="item">
-            <svg class="glyph" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-              <use href={`#g-${glyph}`} />
-            </svg>
-            <span>{label}</span>
-          </li>
-        ))}
+        {group.items.map((label) => {
+          const icon = ICONS[label];
+          return icon ? (
+            <li class="item">
+              <svg class="glyph" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d={icon.d} />
+              </svg>
+              <span>{label}</span>
+            </li>
+          ) : (
+            <li class="item item-textonly"><span class="chip t-label">{label}</span></li>
+          );
+        })}
       </ul>
     </section>
   ))}
@@ -140,13 +75,6 @@ const specialist = [
 </div>
 
 <style>
-  .glyph-defs {
-    position: absolute;
-    width: 0;
-    height: 0;
-    overflow: hidden;
-  }
-
   .skills {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -174,6 +102,7 @@ const specialist = [
   .items {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 10px 18px;
     list-style: none;
     margin: 0;
@@ -196,13 +125,18 @@ const specialist = [
 
   .glyph {
     flex: none;
-    color: var(--color-ink-3);
+    color: var(--color-ink-2);
     transition: color var(--dur-micro) var(--ease-out-quart);
   }
 
   .item:hover .glyph,
   .item:focus-within .glyph {
     color: var(--color-plot);
+  }
+
+  /* Items the icon set has no mark for. */
+  .item-textonly .chip {
+    color: var(--color-ink-2);
   }
 
   .specialist {
