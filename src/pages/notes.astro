@@ -1,208 +1,159 @@
 ---
-// CONTENT.md section 8. This page is the differentiator.
+// CONTENT.md section 8. Six stories and one table. Each story leads with a
+// plain-English hook and puts the technical detail underneath.
 // --color-withdrawn is only ever used here and on withdrawn measurement values.
 import DataTable from '../components/DataTable.astro';
 import Measurement from '../components/Measurement.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import Shell from '../layouts/Shell.astro';
 
-const bad = [
-  [
-    'p99 computed from 20 samples, so p95 and p99 both returned the maximum. A max labelled as a percentile.',
-    'Real p99 was 136.7 ms against the published 98.7 ms. 38 percent of the tail was hidden.',
-  ],
-  [
-    'A latency shift attributed to query text length, when embedding sat outside the timing window, making that mechanism physically impossible.',
-    'An interleaved probe showed the composition effect was 0.1 ms. The shift was environmental noise.',
-  ],
-  [
-    'A speedup ratio that put a scan-only numerator over an end-to-end denominator.',
-    'It understated the real result. 5.5x reported against 6.3x actual.',
-  ],
-  [
-    'Fusion quality measured as overlap against the deepest ranking tested, which reaches 1.0 by construction.',
-    'Claim withdrawn.',
-  ],
-  [
-    'p99 published at the favorable end of an observed range extending to 406.9 ms.',
-    'Superseded. p99 is now reported as a range behind a stability gate.',
-  ],
-  [
-    'Verifying propagation by checking for zero title and citation drift, which cannot distinguish "propagation works" from "propagation is a no-op".',
-    'Rewritten as a synthetic mutation test, which then caught a real bug.',
-  ],
-];
-
 const perf = [
-  ['Missing foreign key index', '1,140 ms', '0.608 ms, 1,875x'],
-  [
-    'Quadratic dedup: self-join on md5(abstract) with no index on the expression',
-    '11 minutes without finishing one strategy',
-    'all four strategies in seconds',
-  ],
-  [
-    'pg_trgm % reads the similarity_threshold GUC and ignores the value in the WHERE clause, so it emitted everything above 0.3 and filtered to 0.92 afterward',
-    'timeout at 25 minutes',
-    'seconds',
-  ],
-  [
-    'Rollback snapshot query scanning 191K rows per merge group instead of a primary key lookup',
-    '3.3 hours',
-    'minutes',
-  ],
-  [
-    'Slice-budget check running after the page generator had already fetched and been billed for the next page',
-    '5 works cost 64 credits',
-    'identical rerun cost 32, both reconciled exactly with the server',
-  ],
+  ['Missing foreign key index', '1,140 ms', '0.608 ms, 1,875x faster'],
+  ['Deduplication comparing every paper against every other, with no index on the comparison', '11 minutes without finishing one strategy', 'all four strategies in seconds'],
+  ['Fuzzy text matching reading its cutoff from a global setting and ignoring the one in the query', 'timeout at 25 minutes', 'seconds'],
+  ['Undo-snapshot query scanning 191K rows per merge group instead of looking up one key', '3.3 hours', 'minutes'],
+  ['Shared memory left at a 64 MB default against a roughly 500 MB index build', 'failed instantly at minute zero', '36 seconds once raised to 2 GB'],
 ];
 ---
 <Shell
-  title="Measurements I threw out"
-  description="Six measurements that were structurally incapable of proving what they claimed, what replaced them, and what changed in the benchmark harness because of them."
+  title="Bugs that passed their own tests"
+  description="Bugs that did not crash. A test that passed because it asked the wrong question, a benchmark reporting a number it could not have measured, and what changed afterwards."
 >
-  <SectionHeading as="h1" solid="Measurements" ghost="I Threw Out" />
+  <SectionHeading as="h1" solid="Bugs That Passed" ghost="Their Own Tests" />
   <p class="display-lede">
-    Every number below was published in my own notes before I found out it could
-    not have failed. Six of them were structurally incapable of proving what
-    they claimed. This page is the record.
+    Most of my worst bugs were not crashes. They were things that looked like
+    they worked: a test that passed because it was asking the wrong question, a
+    benchmark reporting a number it could not possibly have measured. Here are
+    the ones worth writing down. The habit of asking whether a result could have
+    failed is the most useful thing I have picked up so far.
   </p>
 
-  <DataTable
-    caption="The six bad measurements"
-    columns={['what was wrong', 'impact']}
-    rows={bad}
-  />
-
-  <div class="withdrawn-pair">
-    <Measurement
-      label="end-to-end retrieval speedup"
-      value="5.5"
-      unit="x"
-      state="withdrawn"
-      reason="A speedup ratio that put a scan-only numerator over an end-to-end denominator. It understated the real result: 5.5x reported against 6.3x actual."
-    />
-    <Measurement
-      label="p99 latency"
-      value="98.7"
-      unit="ms"
-      state="withdrawn"
-      reason="Computed from 20 samples, so p95 and p99 both returned the maximum. A max labelled as a percentile. Real p99 was 136.7 ms, so 38 percent of the tail was hidden."
-    />
-  </div>
-
-  <section aria-labelledby="harness-heading">
-    <h2 class="sub-h" id="harness-heading">What changed in the harness because of them</h2>
-    <p class="measure">
-      <code>percentile()</code> returns None plus an explicit reason instead of a
-      fake number when n is too small, pinned by a test asserting that
-      <code>percentile(twenty_samples, 0.99)</code> is None.
-      <code>method_record()</code> requires a timing_window keyword that cannot
-      be omitted. <code>speedup()</code> takes both window strings and raises on
-      mismatch. <code>across_runs()</code> gives a point estimate only when max
-      divided by min across at least three runs is within 1.3, and otherwise
-      returns the observed range. Cold and warm cache are reported separately
-      and never blended. Every result carries its iteration count, warmup, cache
-      state, plan forcing, and hardware.
+  <section class="story" aria-labelledby="s1">
+    <h2 class="sub-h" id="s1">The test that could not fail</h2>
+    <p class="hook">
+      The program reported it had written 2,304 rows. The database had none. The
+      test written to catch exactly this was green.
     </p>
-  </section>
-
-  <section aria-labelledby="test-heading">
-    <h2 class="sub-h" id="test-heading">The test that could not fail</h2>
-    <p class="measure">
-      An encoder logged "embedded 2304" and the database held zero rows. psycopg
-      connections default to implicit-transaction mode, where an open
+    <p>
+      psycopg connections default to implicit-transaction mode, where an open
       transaction turns every <code>with conn.transaction():</code> into a
       savepoint. So every per-batch commit rode inside one giant transaction
       that died with the process.
     </p>
-    <p class="measure">
-      The unit test I had written for exactly this scenario was green, because
-      it verified durability through the writer's own connection, and a
-      connection always sees its own uncommitted work.
+    <p>
+      The test passed because it checked the data through the writer's own
+      connection, and a connection always sees its own uncommitted work. It was
+      asking the wrong question.
     </p>
-    <p class="measure">
+    <p>
       Fix: <code>autocommit=True</code> at job entrypoints, and both
       <code>backfill()</code> and <code>ingest()</code> now raise on a
       default-mode connection. The new tests verify durability from a second
       connection with the dying writer closed uncommitted. I stash-swapped the
       fix back out to confirm the new tests actually fail against the broken
-      code.
-    </p>
-    <p class="measure">
-      The ingest loop had the identical latent defect, so the "a crash loses at
-      most one work" guarantee on the 200K pull had been false the entire time.
-      Had I not caught it, the 10-hour encode would have committed nothing.
+      code. The ingest loop had the identical latent defect, so the guarantee
+      that a crash loses at most one item had been false the entire time. Had I
+      not caught it, the 10-hour encode would have committed nothing.
     </p>
   </section>
 
-  <section aria-labelledby="resume-heading">
-    <h2 class="sub-h" id="resume-heading">Resumability, proven with a real SIGKILL</h2>
-    <p class="measure">
+  <section class="story" aria-labelledby="s2">
+    <h2 class="sub-h" id="s2">Proving it survives being killed</h2>
+    <p class="hook">
+      Claiming a job can resume after a crash is easy. I killed it mid-run and
+      then compared every row byte for byte.
+    </p>
+    <p>
       Killed the encoder mid-batch at "embedded 2304", exit 137. A fresh
       connection saw exactly 2,304 durable rows and the uncommitted batch was
       correctly lost. Resume wrote exactly 2,696 more with no double work. All
-      2,304 pre-kill vectors were byte-identical after resume, verified by md5
-      diff of every row, output empty. The design reason it works:
-      <code>embedding IS NULL</code> is the work queue, so there is no
-      checkpoint file that can drift from the database.
+      2,304 pre-kill rows were byte-identical after resume, verified by md5 diff
+      of every row, output empty. The design reason it works: the work queue is
+      simply "rows that have no vector yet", so there is no checkpoint file that
+      can drift out of step with the database.
     </p>
   </section>
 
-  <section aria-labelledby="perf-heading">
-    <h2 class="sub-h" id="perf-heading">Performance bugs</h2>
-    <DataTable
-      caption="Performance bugs, before and after"
-      columns={['bug', 'before', 'after']}
-      rows={perf}
-    />
-    <p class="measure">
-      The billing one was found by credit instrumentation added deliberately,
-      not by any test.
+  <section class="story" aria-labelledby="s3">
+    <h2 class="sub-h" id="s3">A maximum wearing a percentile's name</h2>
+    <p class="hook">
+      I published a worst-case speed figure that was arithmetically incapable of
+      being one. It hid 38 percent of the real tail.
+    </p>
+    <p>
+      The figure was computed from 20 samples. With that few, the worst-case
+      measure just returns the largest value you happened to record, so it was a
+      maximum wearing a percentile's name. The real figure was 136.7 ms against
+      the 98.7 ms I had published.
+    </p>
+    <div class="withdrawn-pair">
+      <Measurement
+        label="worst-case query latency"
+        value="98.7"
+        unit="ms"
+        state="withdrawn"
+        reason="Computed from 20 samples, so the measure returned the largest observed value rather than a percentile. The real figure was 136.7 ms, so 38 percent of the tail was hidden."
+      />
+      <Measurement
+        label="end-to-end retrieval speedup"
+        value="5.5"
+        unit="x"
+        state="withdrawn"
+        reason="A speedup ratio that timed only part of the work on top and all of it underneath. It understated the real result: 5.5x reported against 6.3x actual."
+      />
+    </div>
+    <p>
+      The benchmark harness now refuses rather than guesses. Where a figure is
+      not point-estimable it returns nothing and states the observed range
+      instead, which is what the worst-case block on the Sieve page does.
     </p>
   </section>
 
-  <section aria-labelledby="build-heading">
-    <h2 class="sub-h" id="build-heading">The build that would have died at minute zero</h2>
-    <p class="measure">
-      pgvector allocates its HNSW build graph as a single upfront POSIX
-      shared-memory segment, sized from maintenance_work_mem. The Postgres
-      container's /dev/shm was Docker's 64 MB default. A probe build failed
-      instantly with "could not resize shared memory segment to 1070632416
-      bytes". Fix was <code>shm_size: 2g</code>. Separately,
-      maintenance_work_mem sat at its 64 MB default against a roughly 500 MB
-      build graph, which would have silently taken the spill path and turned a
-      36-second build into an unexplained multi-hour one.
+  <section class="story" aria-labelledby="s4">
+    <h2 class="sub-h" id="s4">The bill that quietly doubled</h2>
+    <p class="hook">
+      A paid API charged me twice for the same work. No test caught it, because
+      no test was watching the money.
+    </p>
+    <p>
+      The budget check ran after the page generator had already fetched, and
+      been billed for, the next page. Five works cost 64 credits. After the fix
+      an identical rerun cost 32, and both figures reconciled exactly with the
+      server's own accounting. It was found by cost instrumentation I added
+      deliberately, not by any test.
     </p>
   </section>
 
-  <section aria-labelledby="handread-heading">
-    <h2 class="sub-h" id="handread-heading">Five times hand-reading the data overturned a rule that looked sound</h2>
-    <p class="measure">
+  <section class="story" aria-labelledby="s5">
+    <h2 class="sub-h" id="s5">Reading the data by hand</h2>
+    <p class="hook">
+      Thousands of papers had no real abstract, just repeated boilerplate. Five
+      separate times, reading the actual rows overturned a rule that looked
+      correct.
+    </p>
+    <p>
+      801 papers whose entire abstract is the string "International audience", a
+      repository deposit artifact. 442 reading "Monthly data release from
+      WikiPathways.org". 129 sharing an ethics disclaimer. For those papers the
+      system had stored the meaning of the boilerplate rather than the meaning
+      of the paper. Fix was a blocklist table, 932 hashes covering 3,847 papers,
+      which are indexed on their title alone. I chose a table rather than a
+      computed rule because "shared across N papers" is derived from the current
+      collection, and a rule would silently change a paper's treatment as new
+      sources landed.
+    </p>
+    <p>
       23 boilerplate abstracts turned out to be 59, and roughly two thirds of
-      those were legitimate: real structured abstracts, genuine dataset
-      descriptions, and one paper about simplifying administrative texts. An
-      automatic rule would have destroyed real signal.
-    </p>
-    <p class="measure">
-      Titles differing by a single digit, "Additional file 5" against
-      "Additional file 7", scored 0.97 trigram similarity, and they were 79
-      percent of the population in exactly the threshold band a strict cutoff
-      trusts most.
-    </p>
-    <p class="measure">
-      A parent paper and its own supplementary file matched at 0.921, in a form
-      the enumerator rule was structurally blind to. The regression fixture
-      asserting this could never happen had been passing, for the wrong reason.
-    </p>
-    <p class="measure">
-      "Preprint (Japanese) (AI-Ready)" and a Zenodo error message both sailed
-      past a minimum-length guard, because generic strings can be long.
-    </p>
-    <p class="measure">
-      A legitimate textbook description, correctly kept off the blocklist,
-      turned out to be a catastrophic dedup key that merged 23 distinct chapters
-      into one paper.
+      those were legitimate. Titles differing by a single digit, "Additional
+      file 5" against "Additional file 7", scored 0.97 similarity, and they were
+      79 percent of the population in exactly the band a strict cutoff trusts
+      most. A parent paper and its own supplementary file matched at 0.921, in a
+      form the rule was structurally blind to, and the regression test asserting
+      this could never happen had been passing for the wrong reason. "Preprint
+      (Japanese) (AI-Ready)" and a Zenodo error message both sailed past a
+      minimum-length guard, because generic strings can be long. And a
+      legitimate textbook description, correctly kept off the blocklist, turned
+      out to merge 23 distinct chapters into one paper.
     </p>
     <blockquote class="conclusion">
       <p>
@@ -216,76 +167,61 @@ const perf = [
     </blockquote>
   </section>
 
-  <section aria-labelledby="embeddings-heading">
-    <h2 class="sub-h" id="embeddings-heading">Semantically meaningless embeddings</h2>
-    <p class="measure">
-      801 papers whose entire abstract is the string "International audience", a
-      repository deposit artifact. 442 reading "Monthly data release from
-      WikiPathways.org". 129 sharing an ethics disclaimer. Those papers' vectors
-      were the embedding of that boilerplate string, sitting in the HNSW index.
-      Fix was a boilerplate_abstracts blocklist table, 932 hashes covering 3,847
-      papers, which embed title-only. I chose a table rather than a computed
-      predicate because "shared across N papers" is derived from the current
-      corpus, and a predicate would silently change a paper's embedding policy
-      as new sources landed.
+  <section class="story" aria-labelledby="s6">
+    <h2 class="sub-h" id="s6">The optimisation I measured and declined</h2>
+    <p class="hook">
+      A change made the slowest step 2.2 times faster. I did not ship it,
+      because the evidence did not show what it appeared to show.
+    </p>
+    <p>
+      Storing each paper's numeric representation at lower precision measured 29
+      documents per second against 13, with similarity to the full-precision
+      versions at a mean of 0.9977. But similarity between two versions of the
+      same document does not establish that the ordering of search results is
+      preserved, because ordering depends on relative distances across the whole
+      collection and small changes reorder near-ties. The correct test is
+      whether the top 10 results still match the full-precision index, and that
+      needs the full-precision index to exist first. So it is deferred as a
+      measured optimisation, not a rejected one.
     </p>
   </section>
 
-  <section aria-labelledby="ghost-heading">
-    <h2 class="sub-h" id="ghost-heading">Ghost records</h2>
-    <p class="measure">
-      Proceedings volumes were being stored as papers, carrying a
-      character-identical abstract copied from a member paper, and ranking right
-      beside that paper in search results. Trigram title matching could never
-      catch it, since the titles share nothing. Fixed with an ingest-time type
-      filter across 6 OpenAlex types, 1,499 records, keeping the raw records for
-      the audit trail.
+  <section class="story" aria-labelledby="s7">
+    <h2 class="sub-h" id="s7">Five that were only slow</h2>
+    <p class="hook">
+      These ones did hang, or time out, or fail outright. They were the easy
+      kind.
     </p>
-  </section>
-
-  <section aria-labelledby="declined-heading">
-    <h2 class="sub-h" id="declined-heading">The optimisation I measured and declined</h2>
-    <p class="measure">
-      int8 dynamic quantization measured 29 docs per second against 13 for fp32,
-      a 2.2x speedup, with cosine similarity to the fp32 vectors at a mean of
-      0.9977. I did not ship it. Cosine parity between two vectors of the same
-      document does not establish that ranking is preserved, because ranking
-      depends on relative distances across the whole corpus and small
-      perturbations reorder near-ties. The correct metric is Recall@10 of the
-      int8 index against the fp32 index, and that needs the fp32 index to exist
-      first. So it is deferred as a measured optimisation, not a rejected one.
-    </p>
-  </section>
-
-  <section aria-labelledby="small-heading">
-    <h2 class="sub-h" id="small-heading">Two small ones worth keeping</h2>
-    <p class="measure">
-      Diagnosing an HTTP 429 revealed the retry logic was discarding the
-      response body, which contained the explanation. The deeper cause was that
-      no API key was being sent at all, running the client at $0.01 a day
-      instead of $1.00.
-    </p>
-    <p class="measure">
-      arXiv 301-redirects HTTP to HTTPS, and httpx does not follow cross-scheme
-      redirects by default. Found on the first live run.
-    </p>
+    <DataTable
+      caption="Performance bugs, before and after"
+      columns={['bug', 'before', 'after']}
+      rows={perf}
+    />
   </section>
 </Shell>
 
 <style>
-  section {
+  .story {
     margin-top: 4.5rem;
   }
 
-  .measure {
+  .story p {
+    max-width: 68ch;
     color: var(--color-ink-2);
+  }
+
+  .hook {
+    margin-top: 1rem;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    color: var(--color-ink);
   }
 
   .withdrawn-pair {
     display: grid;
     grid-template-columns: 1fr;
     gap: 2.5rem;
-    margin-top: 2.5rem;
+    margin: 2.5rem 0;
   }
 
   @media (min-width: 900px) {
@@ -312,5 +248,6 @@ const perf = [
 
   .conclusion p {
     margin: 0;
+    color: var(--color-ink);
   }
 </style>

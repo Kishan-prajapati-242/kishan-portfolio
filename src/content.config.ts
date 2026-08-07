@@ -38,7 +38,7 @@ const work = defineCollection({
         // note, required by SPEC.md section 4's layout description. Optional
         // because not every entry is a measured system.
         hardware: z.string().optional(),
-        summary: z.string().max(240), // used on /work and in meta description
+        summary: z.string().max(260), // used on /work and in meta description, D-066
         draft: z.boolean().default(false),
       })
       .refine((d) => !d.cardArt || !!d.cardArtAlt, {

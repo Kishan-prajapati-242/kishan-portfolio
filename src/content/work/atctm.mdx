@@ -7,14 +7,16 @@ team: independent research
 status: ongoing
 repo: https://github.com/Kishan-prajapati-242/ATCTM
 cardArtAlt: Abstract screenprint of a horizontal timeline of dots where one dot emits curved arrows backward to earlier dots.
-summary: A seven-module BERT-based multi-task model that classifies six things from one input, with a temporal memory that reinterprets earlier statements once a life event has occurred.
+summary: A model that re-reads what someone said earlier once it learns what happened to them later, because the same sentence means something different before and after a bad week.
 stack:
   - BERT
 ---
 
 import Caveat from '../../components/Caveat.astro';
 
-Seven-module BERT-based multi-task model. Two named components: a Subjective Impact Estimator, and a three-tier Temporal Event Memory that reinterprets earlier statements once a life event has occurred. It classifies six things from one input: event type, emotion, sentiment, sarcasm, tense, and certainty. The dataset is custom, over 490 life event types with Gen-Z context and over 49,000 annotated rows, labelled for sentiment, emotion, certainty, sarcasm, and temporal features. I built a separate synthetic dataset generator for it that emits strict JSON, 100 entries per event type, over a 17-emotion taxonomy.
+The same sentence means something different depending on what has happened to the person saying it. "I'm fine" reads one way before a redundancy and another way after. ATCTM is an attempt at a model that goes back and re-reads earlier statements once it learns about a later event.
+
+Underneath it is a seven-module BERT-based multi-task model. Two named components: a Subjective Impact Estimator, and a three-tier Temporal Event Memory that carries out that re-reading. It classifies six things from one input: event type, emotion, sentiment, sarcasm, tense, and certainty. The dataset is custom, over 490 life event types with Gen-Z context and over 49,000 annotated rows, labelled for sentiment, emotion, certainty, sarcasm, and temporal features. I built a separate synthetic dataset generator for it that emits strict JSON, 100 entries per event type, over a 17-emotion taxonomy.
 
 <Caveat>
   ATCTM is proposed as a forward-looking direction inside the CML 2025 review

@@ -4,6 +4,15 @@ Single source of truth for every word and number on the site.
 
 **Hard rule for whoever builds this:** if a fact, number, claim, date, or link is not in this file, it does not go on the site. Do not infer, round, average, or "improve" a number. Do not write a sentence that implies a measurement this file does not contain. If something reads awkwardly, rewrite the sentence, not the fact.
 
+**Plain English first, D-067.** Every item leads with a plain sentence saying
+what the thing is and why it was hard, then the technical detail. Any term a
+non-technical recruiter would not know either gets a half-clause of explanation
+on first use or moves into the case study. That list is at least: HNSW,
+pgvector, ef_search, p50, p99, SARI, Spearman correlation, QLoRA, embeddings,
+entity F1, RRF. None of them may appear in a card summary, a capability card, or
+above the fold on any page. All are welcome inside case studies. This is about
+ordering, not vocabulary: nothing is dumbed down and no number is dropped.
+
 **Style rules that apply to every string you emit:**
 - No em dashes. Anywhere. Not in prose, not in alt text, not in meta descriptions. Use a comma, a colon, parentheses, or a full stop.
 - Sentence case for headings. Not Title Case.
@@ -114,6 +123,48 @@ Ground truth is exact top-50 and top-200 for 520 queries, computed by forced seq
 4      papers, three published and one first-author under review
 $0     infrastructure cost for a 182,853 paper search system
 ```
+
+### Capability cards, home page, verbatim, D-067
+
+```
+Search and retrieval
+Making search find what you meant, not just what you typed. I built one over 182,853 research papers that answers in about 10 milliseconds.
+
+NLP research
+Training language models, and more often checking whether the scores they earn actually mean anything. One first-author paper under review.
+
+Backend engineering
+Python, FastAPI and PostgreSQL. I like the unglamorous part: finding the one missing database index that was making a query 1,875 times slower.
+
+Teaching
+Three semesters as a teaching assistant at Northeastern, across algorithms, data science and discrete maths. Over 200 students.
+```
+
+The index figure is 1,875x, per the performance table in section 8. Kishan's
+draft read "1,800 times slower"; the precise figure is used instead because this
+document requires numbers to keep their precision.
+
+### Project summaries, verbatim, D-067
+
+```
+Sieve
+A search engine for research papers, built because I once screened over 200 by hand and never wanted to do it again. It holds 182,853 papers, finds them by meaning as well as by keyword, answers in about 10 milliseconds, and cost nothing to run.
+
+Gatekeepn't
+AI can rewrite medical documents to be easier for patients to read. We asked whether the standard way of scoring that work measures readability at all, or just measures copying the training data. First-author paper, under review.
+
+ATCTM
+A model that re-reads what someone said earlier once it learns what happened to them later, because the same sentence means something different before and after a bad week.
+
+MoodLens
+Type in a sentence and get six things back at once: the emotion, the event behind it, whether it is sarcastic, and more.
+
+MoodInsight
+Detecting signs of depression from how people write and speak. 88.10 percent accuracy, published at ICICC 2024.
+```
+
+"About 10 milliseconds" is the plain-English rendering of the 9.9 ms end-to-end
+median in section 3, which still carries its exact figure and conditions there.
 
 ### Closing line on home page
 ```
@@ -488,14 +539,26 @@ Use September 2023 as the end date. His resume says August, LinkedIn says Septem
 
 ## 8. NOTES (`/notes`)
 
-This page is the differentiator. Title it:
+This page is the differentiator. Nav label stays "Notes". Title it:
 ```
-Measurements I threw out
+Bugs that passed their own tests
 ```
-Subtitle:
+Intro:
 ```
-Every number below was published in my own notes before I found out it could not have failed. Six of them were structurally incapable of proving what they claimed. This page is the record.
+Most of my worst bugs were not crashes. They were things that looked like they worked: a test that passed because it was asking the wrong question, a benchmark reporting a number it could not possibly have measured. Here are the ones worth writing down. The habit of asking whether a result could have failed is the most useful thing I have picked up so far.
 ```
+
+**Structure, D-067.** Six stories plus one table, in this order, each leading
+with a plain-English hook before the technical detail: the encoder that logged
+2,304 rows against an empty database; resumability proven with a real SIGKILL;
+the 20-sample worst-case figure; the API billing bug; the boilerplate abstracts
+and the five hand-readings; the optimisation measured and declined. The table
+compresses the five performance bugs to one line each.
+
+Removed from this page: the six-bad-measurements table, the harness-changes
+paragraph, the arXiv redirect and the HTTP 429. The harness discipline is shown
+by the third story rather than stated as a list. All of those facts remain
+recorded in this document below.
 
 ### The six bad measurements, as a table with real columns
 | what was wrong | impact |

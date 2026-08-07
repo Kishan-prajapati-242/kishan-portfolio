@@ -8,16 +8,16 @@ status: shipped
 repoPrivate: true
 hardware: M1 MacBook Air, 8 GB RAM, fanless, no GPU
 cardArtAlt: Abstract screenprint of a dense field of small rectangles with one narrow vertical channel selected and several rectangles rendered as hollow outlines.
-summary: Hybrid retrieval and deduplication over 182,853 papers on an 8 GB fanless laptop, at no infrastructure cost. Postgres with pgvector and HNSW, and bge-small embeddings on CPU.
+summary: A search engine for research papers, built because I once screened over 200 by hand and never wanted to do it again. It holds 182,853 papers, finds them by meaning as well as by keyword, answers in about 10 milliseconds, and cost nothing to run.
 stack:
   - Python 3.12
   - FastAPI
   - PostgreSQL 16
-  - pgvector
-  - ONNX Runtime
   - React 18
   - TypeScript
   - Docker Compose
+  - pgvector
+  - ONNX Runtime
 ---
 
 import Caveat from '../../components/Caveat.astro';
@@ -87,7 +87,11 @@ export const recoveries = [
 
 ## Why it exists
 
-I hand-screened over 200 papers for the literature review that became our CML 2025 chapter. Sieve is the tool I wanted while doing that. The first real query I ran against the finished retrieval layer, "clinical text simplification", returned the same paper three times in the top 20. That became the recorded baseline for the deduplication work. It now returns no redundant copies.
+I hand-screened over 200 papers for a literature review once. It took weeks, and partway through I realised I was doing a job a computer should be doing. Sieve is that computer.
+
+It holds 182,853 research papers. You can search it by keyword, which is what you want when you know the exact name of a dataset, or by meaning, which is what you want when you can only describe the idea. It does both at once and comes back in about 10 milliseconds. It runs on a MacBook Air with 8 GB of memory and no fan, and it cost nothing to build.
+
+The first real search I ran returned the same paper three times in the top 20. Fixing that turned into a third of the project.
 
 ## Stack
 
@@ -96,6 +100,8 @@ Python 3.12, FastAPI, Uvicorn, Pydantic v2, psycopg 3, raw SQL on every search p
 Hardware: M1 MacBook Air, 8 GB RAM, fanless, no GPU.
 
 ## The corpus
+
+What is actually in the collection, and how much of it survived cleaning.
 
 <DataTable
   card
@@ -114,6 +120,8 @@ Hardware: M1 MacBook Air, 8 GB RAM, fanless, no GPU.
 ## Latency
 
 All measured through a custom benchmark harness with stated timing windows, discarded warmup, and a percentile guard.
+
+How long a search takes, broken down by the three ways you can search. SQL is the database query alone; end-to-end includes turning your words into something the database can match.
 
 <DataTable
   card
@@ -136,6 +144,8 @@ The exact sequential scan baseline is the denominator for every speedup claim on
 
 OpenAlex moved to a metered API in February 2026. The free tier is $1 per day with a key and $0.01 per day without. `list` operations bill 1 credit and `search` operations bill 10.
 
+What it cost to pull 200,000 papers from a paid API, and how much cheaper the second query design was than the first.
+
 <DataTable
   card
   caption="Ingestion cost against the metered OpenAlex API"
@@ -148,6 +158,8 @@ Also found: OpenAlex deprecated `/concepts` in favour of `/topics`, so the origi
 ## The tokenizer study
 
 Run across the entire corpus with the real WordPiece tokenizer.
+
+How long the text is, depending on which parts of a paper you feed the model. This decided which model I could use.
 
 <DataTable
   card
@@ -170,12 +182,16 @@ Recall plateaus in the 0.989 to 0.990 range by ef=640. The limit is the m and ef
 
 ## Deduplication
 
+How many duplicate papers were merged away, and how much of that is reversible.
+
 <DataTable
   card
   caption="Deduplication outcomes"
   columns={['metric', 'value']}
   rows={dedup}
 />
+
+Which rule caught which duplicates. The exact and mechanical rules did most of the work.
 
 <DataTable
   card
@@ -193,6 +209,8 @@ Recall plateaus in the 0.989 to 0.990 range by ef=640. The limit is the m and ef
 />
 
 ## Data quality recoveries
+
+How many papers were missing the name of the journal or conference they appeared in, before and after the fix.
 
 <DataTable
   card

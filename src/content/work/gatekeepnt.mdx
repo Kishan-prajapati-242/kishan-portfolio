@@ -7,7 +7,7 @@ team: 4 authors
 status: under review
 repo: https://github.com/Kishan-prajapati-242/Gatekeepnt
 cardArtAlt: Abstract screenprint of four measuring rules of different scales aligned beneath one identical shape.
-summary: Whether a model that scores well on a medical text-simplification benchmark has actually learned to simplify. Four corpora, three architectures, and a Spearman correlation of -0.84 across 28 model-by-dataset cells.
+summary: AI can rewrite medical documents to be easier for patients to read. We asked whether the standard way of scoring that work measures readability at all, or just measures copying the training data. First-author paper, under review.
 stack:
   - held back while the paper is under review
 ---
@@ -15,9 +15,11 @@ stack:
 import Caveat from '../../components/Caveat.astro';
 import Measurement from '../../components/Measurement.astro';
 
+Hospitals produce documents patients cannot read. AI can rewrite them, and there is a standard score for judging how well it did. We asked whether that score measures readability at all, or whether it mostly measures how closely a model copies the examples it was trained on.
+
 Co-first author with Ning-Hsuan Tseng, with Asteria Kaeberlein and Malihe Alikhani, at Khoury College of Computer Sciences. The work started as my CS 6120 Natural Language Processing course project in Spring 2026 and ran from January to July 2026.
 
-The question is whether a model that scores well on a medical text-simplification benchmark has actually learned to simplify. Four widely used corpora get treated as interchangeable training data and scored with the same metric. We audited what their reference edits actually do, then trained across three model architectures to see what a model learns from each one.
+The question is whether a model that scores well on that benchmark has actually learned to simplify. Four widely used corpora get treated as interchangeable training data and scored with the same metric. We audited what their reference edits actually do, then trained across three model architectures to see what a model learns from each one.
 
 The headline result is a Spearman correlation of -0.84 across 28 model-by-dataset cells, p < 10^-7, with a block-permutation p < 10^-4 over 10,000 shuffles. The effect also shows up in zero-shot models that never saw these references, which locates the cause in the metric rather than in fine-tuning.
 

@@ -9,6 +9,7 @@ const papers = [
   {
     index: '01',
     title: 'First-author paper under review, ACL Rolling Review, 2026',
+    plain: 'AI can rewrite medical documents so patients can understand them. We checked whether the standard score used to judge that work measures readability at all, or just measures how closely a model copies its training examples.',
     position: 'First author of four.',
     body: 'Under review. No DOI and no public link to the manuscript yet.',
     link: { href: '/work/gatekeepnt', label: 'What I can say about it now' },
@@ -17,19 +18,21 @@ const papers = [
     index: '02',
     title:
       'A Review of Transforming AI for Depression Detection: Transformer Model Dominance, Multimodal Approaches, and Future Pathways',
+    plain: 'A survey of how researchers have used AI to detect depression, which approaches the field has converged on, and where the evidence is thinner than it looks.',
     authorsBefore: 'Jayashri Patil, ',
     authorsAfter: ', Dhruvil Patel, Ravirajsinh Chauhan, Megha Patel',
     venue:
       'Computing and Machine Learning, CML 2025. Lecture Notes in Networks and Systems, volume 1612, pages 87 to 106. Springer Nature Singapore, published January 2026.',
     position: 'Second author of five. Scopus indexed. Not indexed in Web of Science. 79 references.',
     body:
-      'Transformer models dominate depression detection, with BERT at 93.8 percent mean accuracy across the reviewed studies, and social media data accounts for over 55 percent of the research. The chapter proposes ATCTM, using event-triggered updates and personalised dynamic embeddings.',
+      'Transformer models dominate depression detection, with BERT at 93.8 percent mean accuracy across the reviewed studies, and social media data accounts for over 55 percent of the research. The chapter proposes ATCTM, using event-triggered updates and personalised dynamic embeddings, the numeric fingerprints a model uses to compare pieces of text.',
     link: { href: 'https://doi.org/10.1007/978-981-95-2872-1_7', label: 'doi.org/10.1007/978-981-95-2872-1_7' },
   },
   {
     index: '03',
     title:
       'Enhanced Depression Detection on Social Media Using Advanced Machine Learning and Linguistic Analysis Techniques',
+    plain: 'Can you tell that someone is struggling from how they write online? We tested several combinations of methods on 20,000 tweets to find which one identifies it most reliably.',
     authorsBefore: 'Jayashri Patil, Vishal Patil, ',
     authorsAfter: ', Dhruvil Patel, S. Trivedi, R. Patel',
     venue:
@@ -43,6 +46,7 @@ const papers = [
     index: '04',
     title:
       'Towards a Sustainable Future: Enabling Industry with Green Web 3.0, Decentralized AI, and Edge Intelligence',
+    plain: 'What it would take for the next generation of the web to run on less energy, by spreading computation out rather than concentrating it in large data centres.',
     authorsBefore: 'Meenakshi Kashyap, Ravirajsinh Chauhan, Dhruvil Patel, ',
     authorsAfter: '',
     venue:
@@ -71,6 +75,7 @@ const papers = [
       <Card as="li">
         <p class="t-label index">{p.index}</p>
         <h2 class="paper-title">{p.title}</h2>
+        <p class="plain">{p.plain}</p>
         {p.authorsBefore !== undefined && (
           <p class="t-small authors">
             {p.authorsBefore}<strong>Kishan Prajapati</strong>{p.authorsAfter}
@@ -141,6 +146,13 @@ const papers = [
     font-size: var(--text-row-title);
     line-height: 1.25;
     letter-spacing: -0.01em;
+  }
+
+  .plain {
+    margin: 0 0 1rem;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: var(--color-ink);
   }
 
   .authors {

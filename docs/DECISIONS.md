@@ -218,3 +218,12 @@ Three of these numbers were reassigned. Where a number appears twice, the entry 
 - D-063: The display floor is `11.5vw` rather than a fixed 52px. Plex Mono is far wider per character than the reference's geometric sans, and a long word like MEASUREMENTS overran a 390px viewport at a fixed 52px. It still resolves to the reference's 52px from 452px up.
 - D-064: `DataTable` prose cells wrap and only the header row stays on one line. Nowrap on every cell pushed the notes table past the viewport instead of scrolling inside its wrapper.
 - D-065: Footer links moved from inline comma-separated anchors to a flex list. The markup collapsed the whitespace around the commas and the links ran together.
+
+## Plain-English content pass
+
+- D-066: The collection schema's `summary` cap moves from 240 to 260 characters. The approved Sieve summary is 245 and the cap was an arbitrary meta-description budget, not a measurement, so the copy wins.
+- D-067: Every item leads with a plain sentence saying what it is, then the technical detail. Eleven named terms are barred from card summaries, capability cards and above-the-fold copy, and either carry a half-clause of explanation on first use or move into a case study. Recorded in CONTENT.md so the doc governs future copy.
+- D-068: The capability card reads "1,875 times slower" rather than the drafted "1,800 times". CONTENT.md requires numbers to keep their precision, and 1,875x is the figure in the performance table. Revert in one word if the round number was deliberate.
+- D-069: "About 10 milliseconds" is kept as the plain-English rendering of the 9.9 ms end-to-end median. It is explicitly approximate, and the exact figure with its conditions still sits in the Sieve case study.
+- D-070: Measurement blocks came off the `/work` cards. Their labels and provenance carry the barred vocabulary, and the same numbers are on the case studies where that vocabulary belongs.
+- D-071: The Sieve stack order changed so the first four entries, which are the only ones that become chips, are names a recruiter recognises. The full stack still renders on the case study.

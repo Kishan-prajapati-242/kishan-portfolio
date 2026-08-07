@@ -33,13 +33,14 @@ const frontEnd = [
 >
   <SectionHeading as="h1" solid="Selected" ghost="Work" />
   <p class="display-lede">
-    Five projects. Each one carries its own numbers and the conditions they were
-    measured under.
+    Five things I have built: a search engine over 182,853 research papers, a
+    paper under review, and three models that read text for emotion and intent.
+    Each one says what it actually does before it says how.
   </p>
 
   <div class="card-grid card-grid-2 section-body">
     {entries.map((entry) => (
-      <ProjectCard entry={entry} art={artFor(entry.id)} headingLevel={2} />
+      <ProjectCard entry={entry} art={artFor(entry.id)} showMeasurement={false} headingLevel={2} />
     ))}
   </div>
 

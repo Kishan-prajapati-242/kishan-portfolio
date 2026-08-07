@@ -22,7 +22,7 @@ const {
   headingLevel = 2,
 }: Props = Astro.props;
 
-const { title, summary, status, stack, cardArtAlt, timeline } = entry.data;
+const { title, summary, status, stack, cardArtAlt, timeline, repo, demo } = entry.data;
 const Heading = `h${headingLevel}` as 'h2' | 'h3';
 const year = timeline?.match(/\b(20\d{2})\b/)?.[1];
 
@@ -96,6 +96,8 @@ const highlight = showMeasurement ? highlights[entry.id] : undefined;
 
   <p class="more t-label">
     <a href={`/work/${entry.id}`}>Read the case study</a>
+    {demo && <a class="second" href={demo}>Open the live demo</a>}
+    {!demo && repo && <a class="second" href={repo}>View the code</a>}
   </p>
 </Card>
 
@@ -187,5 +189,8 @@ const highlight = showMeasurement ? highlights[entry.id] : undefined;
 
   .more {
     margin: auto 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
   }
 </style>
