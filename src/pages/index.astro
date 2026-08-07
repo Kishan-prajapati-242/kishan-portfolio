@@ -4,6 +4,7 @@ import { getCollection } from 'astro:content';
 
 import Card from '../components/Card.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import Skills from '../components/Skills.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import Shell from '../layouts/Shell.astro';
 
@@ -19,10 +20,12 @@ const entries = (await getCollection('work', ({ data }) => !data.draft)).sort(
 const featured = entries.slice(0, 2);
 
 // CONTENT.md section 2, secondary facts.
+// count: the figure animates from 0. prefix and suffix live in their own
+// spans outside the counting element, because counter() renders digits only.
 const stats = [
-  { value: '200+', label: 'students graded' },
-  { value: '4', label: 'papers, three published' },
-  { value: '$0', label: 'infrastructure cost' },
+  { spoken: '200 plus students graded', count: '200', prefix: '', suffix: '+', label: 'students graded' },
+  { spoken: '4 papers, three published', count: '4', prefix: '', suffix: '', label: 'papers, three published' },
+  { spoken: '$0 infrastructure cost', count: null, prefix: '', suffix: '$0', label: 'infrastructure cost' },
 ];
 
 // CONTENT.md section 7.
@@ -55,8 +58,15 @@ const papers = [
   <ul class="stats">
     {stats.map((s) => (
       <li>
-        <span class="stat-value">{s.value}</span>
-        <span class="stat-label">{s.label}</span>
+        <span class="stat-value">
+          <span class="sr-only">{s.spoken}</span>
+          <span aria-hidden="true">
+            {s.prefix}
+            {s.count && <span class="stat-figure" data-target={s.count} style={`--num: 0`}></span>}
+            {s.suffix}
+          </span>
+        </span>
+        <span class="stat-label" aria-hidden="true">{s.label}</span>
       </li>
     ))}
   </ul>
@@ -92,6 +102,11 @@ const papers = [
     </Card>
   </div>
 
+  <section class="section" aria-labelledby="skills-heading">
+    <SectionHeading id="skills-heading" solid="What I" ghost="Work With" />
+    <div class="section-body"><Skills /></div>
+  </section>
+
   <section class="section" aria-labelledby="work-heading">
     <SectionHeading id="work-heading" solid="Selected" ghost="Work" />
     <div class="card-grid card-grid-2 section-body">
@@ -104,7 +119,7 @@ const papers = [
 
   <section class="section" aria-labelledby="teaching-heading">
     <SectionHeading id="teaching-heading" solid="Teaching" ghost="At Khoury" />
-    <ul class="rows section-body">
+    <ul class="rows slide section-body">
       {teaching.map((t) => (
         <li class="row">
           <h3 class="row-title">{t.course}</h3>
@@ -117,7 +132,7 @@ const papers = [
 
   <section class="section" aria-labelledby="papers-heading">
     <SectionHeading id="papers-heading" solid="Published" ghost="Papers" />
-    <ul class="rows section-body">
+    <ul class="rows slide section-body">
       {papers.map((p) => (
         <li class="row">
           <h3 class="row-title"><a href={p.href}>{p.title}</a></h3>

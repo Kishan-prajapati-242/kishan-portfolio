@@ -64,8 +64,46 @@ const isCurrent = (href: string) => path === href || path === `${href}/` || path
     justify-content: center;
     gap: 12px;
     flex-wrap: wrap;
-    padding: 24px 20px 0;
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 24px 20px 16px;
+    background-color: color-mix(in oklab, var(--color-paper) 82%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid transparent;
+  }
+
+  /* Shrink and gain a rule on scroll, driven by scroll position rather than
+     time. Padding and font-size are animated here rather than transform,
+     because the bar has to keep its layout height so it does not overlap the
+     content it is pinned above. This is the one permitted exception to the
+     transform-only rule and it is bounded to a single element. */
+  @supports (animation-timeline: scroll(root block)) {
+    .site-header {
+      animation: nav-shrink linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px 160px;
+    }
+
+    .home-link {
+      animation: nav-name-shrink linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px 160px;
+    }
+  }
+
+  @keyframes nav-shrink {
+    to {
+      padding-top: 12px;
+      padding-bottom: 10px;
+      border-bottom-color: var(--color-grid);
+    }
+  }
+
+  @keyframes nav-name-shrink {
+    to {
+      font-size: 0.5844rem;
+    }
   }
 
   .home-link {

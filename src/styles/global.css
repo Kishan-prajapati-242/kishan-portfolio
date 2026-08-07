@@ -59,11 +59,11 @@
   /* Motion tokens. Distances: text 16px, cards 24px, nothing over 32px. */
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-micro: 160ms;
-  --dur-fast: 240ms;
-  --dur-base: 420ms;
-  --dur-slow: 700ms;
-  --dur-hero: 900ms;
+  --dur-micro: 200ms;
+  --dur-fast: 320ms;
+  --dur-base: 600ms;
+  --dur-slow: 1000ms;
+  --dur-hero: 1300ms;
 }
 
 /* Dark tokens, DESIGN.md section 2. Applied via the .dark class on html,
@@ -590,6 +590,13 @@
   .section {
     margin-top: 9rem;
   }
+
+  /* Every heading that is a link target clears the pinned nav. */
+  :is(h1, h2, h3)[id],
+  .section-h,
+  .sub-h {
+    scroll-margin-top: 6rem;
+  }
 }
 
 /* ============================================================================
@@ -613,15 +620,60 @@
 @keyframes reveal-up { to { opacity: 1; transform: none; } }
 @keyframes reveal-fade { to { opacity: 1; } }
 @keyframes line-up { to { transform: none; } }
+@keyframes unblur { to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes slide-in { to { opacity: 1; transform: none; } }
 @keyframes wipe-up { to { clip-path: inset(0 0 0 0); } }
 @keyframes progress-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Counting figures, pure CSS. @property makes --num animatable as an integer;
+   counter() then renders it. The real value is in the DOM as visually hidden
+   text and the counting element is aria-hidden, because pseudo-element content
+   is announced unreliably and nobody should hear the intermediate values. */
+@property --num {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+@supports (counter-set: x 1) {
+  .stat-figure {
+    counter-reset: num var(--num);
+  }
+
+  .stat-figure::after {
+    content: counter(num);
+  }
+
+  .stat-figure[data-target='200'] { animation: count-200 var(--dur-slow) var(--ease-out-quart) 560ms both; }
+  .stat-figure[data-target='4'] { animation: count-4 var(--dur-slow) var(--ease-out-quart) 690ms both; }
+
+  /* One keyframe block per stat. Animating to var(--target) inside keyframes
+     is not reliable across engines, so the target is literal. */
+  @keyframes count-200 { to { --num: 200; } }
+  @keyframes count-4 { to { --num: 4; } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @supports (counter-set: x 1) {
+    .stat-figure[data-target='200'] { --num: 200; animation: none !important; }
+    .stat-figure[data-target='4'] { --num: 4; animation: none !important; }
+  }
+}
 
 /* Per-line mask. The text stays in flow and is never removed from the DOM, so
    it is readable at all times even if an animation never runs. Uppercase
    display type has no descenders, and the padding pair covers the rest. */
 .line {
   display: block;
-  overflow: hidden;
+  /* clip-path, not overflow: hidden. overflow: hidden makes the element a
+     scroll container, and a view() timeline resolves against the nearest
+     scroll container, so the inner span measured itself against its own mask
+     and read as fully in view from the first frame. Every heading revealed on
+     load regardless of how far down the page it was. clip-path clips painting
+     without creating a scroller, so the timeline resolves against the
+     document. There is no view(<scroller>) syntax to reach for instead:
+     view() takes only an axis and an inset. */
+  clip-path: inset(0);
   padding-bottom: 0.08em;
   margin-bottom: -0.08em;
 }
@@ -671,8 +723,8 @@
 }
 
 .stats > li:nth-child(1) { animation-delay: 520ms; }
-.stats > li:nth-child(2) { animation-delay: 590ms; }
-.stats > li:nth-child(3) { animation-delay: 660ms; }
+.stats > li:nth-child(2) { animation-delay: 690ms; }
+.stats > li:nth-child(3) { animation-delay: 740ms; }
 
 /* The figures wipe rather than count up. Counting needs JavaScript, screen
    readers read the intermediate values, and it is a cliche. */
@@ -681,9 +733,9 @@
   animation: wipe-up var(--dur-base) var(--ease-out-expo) both;
 }
 
-.stats > li:nth-child(1) .stat-value { animation-delay: 560ms; }
-.stats > li:nth-child(2) .stat-value { animation-delay: 630ms; }
-.stats > li:nth-child(3) .stat-value { animation-delay: 700ms; }
+.stats > li:nth-child(1) .stat-value { animation-delay: 580ms; }
+.stats > li:nth-child(2) .stat-value { animation-delay: 690ms; }
+.stats > li:nth-child(3) .stat-value { animation-delay: 800ms; }
 
 .focus > * {
   opacity: 0;
@@ -691,10 +743,10 @@
   animation: reveal-up var(--dur-base) var(--ease-out-quart) both;
 }
 
-.focus > *:nth-child(1) { animation-delay: 680ms; }
-.focus > *:nth-child(2) { animation-delay: 750ms; }
-.focus > *:nth-child(3) { animation-delay: 820ms; }
-.focus > *:nth-child(4) { animation-delay: 890ms; }
+.focus > *:nth-child(1) { animation-delay: 760ms; }
+.focus > *:nth-child(2) { animation-delay: 870ms; }
+.focus > *:nth-child(3) { animation-delay: 980ms; }
+.focus > *:nth-child(4) { animation-delay: 1090ms; }
 
 /* ---- Scroll reveals ----------------------------------------------------- */
 /* Everything in here is guarded. In the fallback the elements are simply
@@ -707,15 +759,15 @@
     transform: translateY(24px);
     animation: reveal-up linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 45%;
+    animation-range: entry 10% entry 70%;
   }
 
   .reveal-text {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(20px);
     animation: reveal-up linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 45%;
+    animation-range: entry 10% entry 70%;
   }
 
   /* Labels land before the heading they introduce. */
@@ -723,7 +775,48 @@
     opacity: 0;
     animation: reveal-fade linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 30%;
+    animation-range: entry 0% entry 45%;
+  }
+
+  /* Technique 5, staggered cascade, on the skills groups. Each item gets its
+     own timeline so a group entering alone still animates. */
+  .skills .item,
+  .skills .specialist .chip {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+  }
+
+  .skills .item:nth-child(4n + 1),
+  .skills .specialist .chip:nth-child(4n + 1) { animation-range: entry 10% entry 70%; }
+  .skills .item:nth-child(4n + 2),
+  .skills .specialist .chip:nth-child(4n + 2) { animation-range: entry 16% entry 76%; }
+  .skills .item:nth-child(4n + 3),
+  .skills .specialist .chip:nth-child(4n + 3) { animation-range: entry 22% entry 82%; }
+  .skills .item:nth-child(4n + 4),
+  .skills .specialist .chip:nth-child(4n + 4) { animation-range: entry 28% entry 88%; }
+
+  /* Technique 3, blur to sharp. Images only: blurred text looks broken. */
+  .project-card .art img {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.04);
+    animation: unblur linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 90%;
+  }
+
+  /* Technique 6, directional slide. Alternating sides, so the two list-shaped
+     sections read differently from the card grids. */
+  .rows.slide > .row:nth-child(odd) {
+    transform: translateX(-24px);
+    animation-name: slide-in;
+  }
+
+  .rows.slide > .row:nth-child(even) {
+    transform: translateX(24px);
+    animation-name: slide-in;
   }
 
   /* Tables fade only. A table sliding while someone reads a number is
@@ -732,7 +825,7 @@
     opacity: 0;
     animation: reveal-fade linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 40%;
+    animation-range: entry 10% entry 70%;
   }
 
   /* Section headings mask-reveal per line on the scroll clock. */
@@ -740,11 +833,11 @@
     transform: translateY(110%);
     animation: line-up linear both;
     animation-timeline: view();
-    animation-range: entry 10% entry 50%;
+    animation-range: entry 15% entry 85%;
   }
 
   .section-h .line:nth-child(2) .line-in {
-    animation-range: entry 16% entry 56%;
+    animation-range: entry 22% entry 92%;
   }
 
   /* Grid children each get their own timeline, so a card entering alone still
@@ -758,16 +851,15 @@
     animation-timeline: view();
   }
 
-  .card-grid > *:nth-child(5n + 1),
-  .rows > .row:nth-child(5n + 1) { animation-range: entry 0% entry 45%; }
-  .card-grid > *:nth-child(5n + 2),
-  .rows > .row:nth-child(5n + 2) { animation-range: entry 5% entry 50%; }
-  .card-grid > *:nth-child(5n + 3),
-  .rows > .row:nth-child(5n + 3) { animation-range: entry 10% entry 55%; }
-  .card-grid > *:nth-child(5n + 4),
-  .rows > .row:nth-child(5n + 4) { animation-range: entry 15% entry 60%; }
-  .card-grid > *:nth-child(5n + 5),
-  .rows > .row:nth-child(5n + 5) { animation-range: entry 20% entry 65%; }
+  /* Chains cap at four, per the revised stagger rule. */
+  .card-grid > *:nth-child(4n + 1),
+  .rows > .row:nth-child(4n + 1) { animation-range: entry 10% entry 70%; }
+  .card-grid > *:nth-child(4n + 2),
+  .rows > .row:nth-child(4n + 2) { animation-range: entry 16% entry 76%; }
+  .card-grid > *:nth-child(4n + 3),
+  .rows > .row:nth-child(4n + 3) { animation-range: entry 22% entry 82%; }
+  .card-grid > *:nth-child(4n + 4),
+  .rows > .row:nth-child(4n + 4) { animation-range: entry 28% entry 88%; }
 
   /* The hero grids are on the time clock, not the scroll clock. */
   .focus > * {
@@ -785,7 +877,7 @@
   .shell-main > :last-child .card-grid > *,
   .shell-main > :last-child .rows > .row,
   .shell-main > :last-child .section-h .line-in {
-    animation-range: entry 0% cover 40%;
+    animation-range: entry 10% cover 50%;
   }
 
   /* Scroll progress, one rule and no JavaScript. */
@@ -861,13 +953,22 @@ button:active {
   .profile,
   .profile .portrait,
   .display-lede,
+  .skills .item,
+  .skills .specialist .chip,
+  .project-card .art img,
   .prose .data-table {
     opacity: 1 !important;
     transform: none !important;
     clip-path: none !important;
+    filter: none !important;
   }
 
   .scroll-progress {
     display: none;
+  }
+
+  .site-header,
+  .home-link {
+    animation: none !important;
   }
 }

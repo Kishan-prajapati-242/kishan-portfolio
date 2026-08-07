@@ -236,3 +236,12 @@ Three of these numbers were reassigned. Where a number appears twice, the entry 
 - D-075: The last-screen selector is `.section:last-of-type` plus `.shell-main > :last-child`. The obvious `main > :last-child` matches the shell wrapper and silently applies the last-screen range to every card and row on the page.
 - D-076: `ClientRouter` added with `fallback="animate"`, fade at 240ms. The theme toggle, mobile nav and case study rail rebind on `astro:page-load` behind a `data-bound` guard, the theme class is reapplied on `astro:after-swap` to prevent a flash, and the profile sidebar carries `transition:persist` so it does not replay its entry animation on every navigation.
 - D-077: Stat figures reveal with a `clip-path` wipe rather than counting up. Counting needs JavaScript, screen readers read the intermediate values, and it is a cliche.
+
+## Motion fixes and the skills section
+
+- D-078: CONTENT.md gains section 13, SKILLS, on Kishan's instruction, with his provenance notes in brackets. Unbracketed items are canonical but less strongly sourced. PHP is deliberately excluded.
+- D-079: The line mask uses `clip-path: inset(0)`, not `overflow: hidden`. `overflow: hidden` makes the element a scroll container, and `view()` resolves against the nearest scroll container, so the inner span measured itself against its own mask and read as fully in view from the first frame. Every heading revealed on load. `view(root)` is not a fix: `view()` takes only an axis and an inset, and the invalid value falls back to `animation-timeline: auto`.
+- D-080: Skill icons are hand-authored generic marks indicating what kind of thing each item is, not brand logos. SPEC.md section 1 bans an icon package, and hand-drawn approximations of thirty-two trademarked logos would look wrong and be legally awkward.
+- D-081: The counters run on the time clock, not a scroll timeline, because the stats sit above the fold where a `view()` timeline completes immediately. One keyframe block per stat with a literal target, since animating to `var()` inside keyframes is unreliable.
+- D-082: 182,853 is not a counter and has no CSS-only comma. `counter()` renders digits with no thousands separator, so it is left static rather than shipped as `182853`.
+- D-083: The case study's scoped `.prose h2` scroll-margin outranked the global rule, so anchor jumps landed under the pinned nav. It carries 6rem explicitly.

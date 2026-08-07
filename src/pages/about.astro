@@ -3,6 +3,7 @@
 // else on the site. No diet, calorie tracking, banking, housing, or family.
 import Card from '../components/Card.astro';
 import SectionHeading from '../components/SectionHeading.astro';
+import Skills from '../components/Skills.astro';
 import Shell from '../layouts/Shell.astro';
 ---
 <Shell
@@ -81,6 +82,11 @@ import Shell from '../layouts/Shell.astro';
       </p>
     </Card>
   </div>
+
+  <section class="section" aria-labelledby="skills-heading">
+    <SectionHeading id="skills-heading" solid="What I" ghost="Work With" />
+    <div class="section-body"><Skills full /></div>
+  </section>
 
   <section class="section" aria-labelledby="care-heading">
     <SectionHeading id="care-heading" solid="What I" ghost="Care About" />

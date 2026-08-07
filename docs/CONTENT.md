@@ -737,3 +737,42 @@ For reference, so nobody reintroduces them from older source material.
 | TA appointments | four | three |
 | Sieve corpus in perf claims | one number | 196,893 pre-dedup for all perf figures, 182,853 live. State both. |
 | Self-description | Lead AI Researcher | MS student. Nothing grander. |
+
+---
+
+## 13. SKILLS
+
+Added D-078 on Kishan's instruction. Bracketed items carry the evidence he gave
+for them. Unbracketed items were supplied directly by him without a specific
+project citation, so they are canonical but less strongly sourced. PHP is
+deliberately excluded: he is certified in it and has not used it since 2024,
+and a dead skill invites a question he cannot answer well.
+
+The first four groups render as an icon plus a label. The fifth renders as text
+chips with no icon, and goes last.
+
+### Languages
+Python [Sieve], TypeScript [Sieve frontend], JavaScript [MoodLens], Java [CS 5010, taught in Java], C++ [LinkedIn top skill; GDSC competitive programming], SQL [raw SQL on every Sieve search path], Bash [shell scripting, infrastructure], HTML, CSS
+
+### Backend and data
+FastAPI [Sieve, MoodLens], Flask, Node.js [Technonite MERN], Express [Technonite MERN], PostgreSQL [Sieve], MongoDB [Technonite MERN], Docker [Sieve, Docker Compose], AWS [AWS Fundamentals Specialization, April 2024]
+
+### ML and NLP
+PyTorch, TensorFlow, Hugging Face Transformers, scikit-learn, NumPy, Pandas, Jupyter
+
+### Frontend and tools
+React [Sieve, MoodInsight], Vite [Sieve], Redux, Tailwind, Git, GitHub, Linux, LaTeX [resumes and the paper]
+
+### Specialist, text chips only, no icons, last
+pgvector, HNSW, ONNX Runtime, QLoRA, PEFT, EASSE, SciSpaCy, pg_trgm, Reciprocal Rank Fusion
+
+These are the things that distinguish him from every other applicant with
+Python and React on a grid, and none of them has a logo. Text chips are honest
+and read as depth rather than as a gap.
+
+**Placement.** Home page, between the capability cards and featured work. A
+fuller version on /about.
+
+**Jargon exception.** The Specialist group names terms that D-067 bars from
+above-the-fold copy. They are permitted here because a labelled skills chip is
+a name, not a claim a reader has to parse, and the group heading frames them.

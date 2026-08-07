@@ -346,6 +346,17 @@ shorthand before checking anything else.
 **Above the fold.** Covered by the time clock above. Never put `.reveal` on
 anything in the first viewport.
 
+**The mask is a scroll container.** `overflow: hidden` makes an element a
+scroll container, and `view()` resolves against the **nearest** scroll
+container, not the document. So a line mask built with `overflow: hidden` makes
+its own inner span measure itself against the mask, which the span exactly
+fills, so the timeline reads as complete from the first frame and every heading
+reveals on load no matter how far down the page it is. There is no
+`view(<scroller>)` syntax to reach for: `view()` takes only an axis and an
+inset, and `view(root)` is invalid and silently falls back to
+`animation-timeline: auto`. **The mask must use `clip-path: inset(0)`**, which
+clips painting without creating a scroller.
+
 **Last screen.** An element near the bottom of a short page can never complete
 an entry range, because the page cannot scroll far enough. The final section on
 every page uses `animation-range: entry 0% cover 40%`. Selector precision
@@ -391,15 +402,66 @@ the intermediate values, and it is a cliche. They wipe instead.
 
 ### Scroll reveals, per element
 
+### The kit, seven techniques, one job each
+
+Every element uses exactly one. Do not combine except where stated.
+
+| # | technique | used for |
+|---|---|---|
+| 1 | line mask reveal, `translateY(110%)` behind `clip-path` | hero heading, every section heading, nothing else |
+| 2 | fade rise, opacity plus `translateY(20px)` | paragraphs, list rows, chips, eyebrow labels (fade only, no movement) |
+| 3 | blur to sharp, `blur(12px)` plus `scale(1.04)` | the five project card images **only**, never text |
+| 4 | clip wipe, `inset(0 0 100% 0)` | portrait, the `$0` figure, scroll progress fill |
+| 5 | staggered cascade on top of 2 | card grids, skills icon groups |
+| 6 | directional slide, alternating `translateX(∓24px)` | papers list and teaching appointments only |
+| 7 | counter | three of the stat figures |
+
 | element | motion | range |
 |---|---|---|
-| section heading | per-line mask reveal | `entry 10% entry 50%` |
-| eyebrow label | fade only | `entry 0% entry 30%` |
-| cards in a grid | fade, 24px rise, scale 0.98 to 1 | staggered, own `view()` timeline each |
-| list rows | same as cards | staggered |
-| tables | fade only, no movement | `entry 0% entry 40%` |
+| section heading | technique 1 | `entry 15% entry 85%` |
+| cards, rows, skills | technique 5 | `entry 10% entry 70%`, four-deep stagger |
+| project images | technique 3 | `entry 0% entry 90%` |
+| tables | fade only, no movement | `entry 10% entry 70%` |
+| final section on a page | any | `entry 10% cover 50%` |
 | case study prose | **none** | |
 | notes page body | **none**, headings only | |
+
+Stagger chains cap at **four**, not five.
+
+### Counting figures
+
+Pure CSS. `@property --num` with `syntax: '<integer>'` makes the value
+animatable, `counter-reset` plus `counter()` in `::after` renders it. One
+keyframe block per stat with a literal target, because animating to `var()`
+inside keyframes is not reliable across engines. Wrapped in
+`@supports (counter-set: x 1)`.
+
+Counts 200 and 4. **Does not count 182,853**: `counter()` has no thousands
+separator and would render `182853`. There is no CSS-only way to get the comma,
+so that figure is not a counter at all. `$0` takes the clip wipe instead, since
+counting to zero shows nothing.
+
+The stats sit above the fold, so the counters run on the **time** clock with
+the hero delays, not a scroll timeline: a `view()` timeline on an element
+already visible at load completes immediately anyway.
+
+Accessibility: the counting element is `aria-hidden`, and the real final value
+sits beside it as visually hidden text, so a screen reader hears "200 plus
+students graded" once and never an intermediate value. Under reduced motion the
+final number renders statically.
+
+### Sticky nav
+
+`position: sticky`, `top: 0`, above content. Translucent `--color-paper` with
+`backdrop-filter: blur(12px)`, and a 1px `--color-grid` bottom border that
+animates in from transparent. Shrinks on `scroll(root block)` over
+`0px 160px`, animating `padding` and `font-size` rather than `transform`,
+because the bar must keep its layout height. That is the one permitted
+exception to the transform-only rule and it is bounded to a single element.
+
+Every heading that is a link target carries `scroll-margin-top: 6rem`. Note
+that the case study's scoped `.prose h2` rule outranks the global one, so it
+carries the same value explicitly.
 
 Each grid item gets its own `view()` timeline rather than one shared timeline,
 so a card entering alone still animates. Tables never move: a table sliding
