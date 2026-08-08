@@ -1,0 +1,302 @@
+---
+// A single mechanical keycap, drawn in CSS 3D. CONTENT.md section 9 lists
+// keyboard building among his interests, so this is the interest rendered
+// rather than an ornament borrowed from somewhere else.
+//
+// No 3D library. Three.js is roughly 150 KB gzipped, more than twenty times
+// the entire rest of this site's JavaScript, to draw a shape that is six
+// quadrilaterals. The whole thing here is one element tree, a transform per
+// face, and a small pointer handler.
+//
+// Six faces with a real keycap taper: the base is 120px, the top 92px, and the
+// four walls are trapezoids leaning inward by 16.93 degrees, which is the
+// angle a 14px inset over a 46px rise actually makes. The walls are clipped
+// rather than skewed so the corners meet.
+//
+// Decorative throughout: aria-hidden, not focusable, and nothing on the page
+// depends on it. Static under prefers-reduced-motion.
+---
+<div class="keycap-stage" aria-hidden="true">
+  <div class="keycap" data-keycap>
+    <div class="k-face k-top">
+      {/* Hand-authored, not a font glyph: a K built from a stem and two
+          diagonals, on the same 24 unit grid as the skill marks. */}
+      <svg class="legend" viewBox="0 0 24 24" width="34" height="34" aria-hidden="true">
+        <path d="M7 4.5 V19.5" />
+        <path d="M17 4.5 L8.6 12 L17 19.5" />
+      </svg>
+    </div>
+    <div class="k-face k-bottom"></div>
+    <div class="k-face k-wall k-wall-n"></div>
+    <div class="k-face k-wall k-wall-e"></div>
+    <div class="k-face k-wall k-wall-s"></div>
+    <div class="k-face k-wall k-wall-w"></div>
+  </div>
+</div>
+
+<script>
+  // Drag to rotate, release for momentum, click to press.
+  //
+  // --rx and --ry are registered angles, so the settle back to rest is a plain
+  // CSS transition on --ease-spring rather than a hand-rolled spring in a rAF
+  // loop. The loop only runs while the fling is still decaying.
+  document.addEventListener('astro:page-load', () => {
+    const cap = document.querySelector<HTMLElement>('[data-keycap]');
+    if (!cap || cap.dataset.bound === 'true') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    cap.dataset.bound = 'true';
+
+    const REST_X = 58;
+    const REST_Y = -30;
+    let rx = REST_X;
+    let ry = REST_Y;
+    let vx = 0;
+    let vy = 0;
+    let dragging = false;
+    let moved = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let frame = 0;
+
+    const write = () => {
+      cap.style.setProperty('--rx', `${rx}deg`);
+      cap.style.setProperty('--ry', `${ry}deg`);
+    };
+
+    const settle = () => {
+      // Hand back to CSS: the transition carries the overshoot.
+      cap.classList.add('is-settling');
+      rx = REST_X;
+      ry = REST_Y;
+      write();
+    };
+
+    const decay = () => {
+      frame = 0;
+      rx += vx;
+      ry += vy;
+      vx *= 0.94;
+      vy *= 0.94;
+      write();
+      if (Math.abs(vx) > 0.05 || Math.abs(vy) > 0.05) {
+        frame = requestAnimationFrame(decay);
+      } else {
+        settle();
+      }
+    };
+
+    cap.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      moved = 0;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      vx = 0;
+      vy = 0;
+      if (frame) { cancelAnimationFrame(frame); frame = 0; }
+      cap.classList.remove('is-settling');
+      cap.setPointerCapture(e.pointerId);
+    });
+
+    cap.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      moved += Math.abs(dx) + Math.abs(dy);
+      vy = dx * 0.35;
+      vx = -dy * 0.35;
+      rx += vx;
+      ry += vy;
+      write();
+    });
+
+    const release = (e: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      if (cap.hasPointerCapture(e.pointerId)) cap.releasePointerCapture(e.pointerId);
+      // Under about 6px of travel this was a press, not a drag.
+      if (moved < 6) {
+        cap.classList.remove('is-pressed');
+        void cap.offsetWidth;
+        cap.classList.add('is-pressed');
+        settle();
+        return;
+      }
+      frame = requestAnimationFrame(decay);
+    };
+
+    cap.addEventListener('pointerup', release);
+    cap.addEventListener('pointercancel', release);
+    cap.addEventListener('animationend', () => cap.classList.remove('is-pressed'));
+    write();
+  });
+</script>
+
+<style>
+  /* Geometry. base 120, top 92, so each wall insets 14px over a 46px rise:
+     wall length sqrt(14^2 + 46^2) = 48.08, lean atan(14/46) = 16.93deg. */
+  .keycap-stage {
+    --base: 120px;
+    --cap: 92px;
+    --inset: 14px;
+    --rise: 46px;
+    --wall: 48.08px;
+    --lean: 16.93deg;
+
+    /* The cap sits in a recessed well, like a switch plate, and that is not
+       decoration: light mode's whole surface range is 91.4 to 99.2 L* with the
+       page at 95.5 in the middle, which is not enough room to shade five faces
+       against the page itself. The first version had the front wall set to
+       --color-paper, exactly the page colour, so it disappeared and the cap
+       read as a flat shape with one stray edge. Giving the object its own
+       recessed backdrop frees the whole raised range for the faces. */
+    box-sizing: content-box;
+    width: var(--base);
+    height: var(--base);
+    padding: 22px 34px 34px;
+    background-color: var(--color-paper-2);
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-panel);
+    perspective: 620px;
+    margin: 0.5rem 0 0;
+    flex: none;
+    touch-action: none;
+  }
+
+  .keycap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    cursor: grab;
+    transform: rotateX(var(--rx, 58deg)) rotateZ(var(--ry, -30deg))
+      translateZ(var(--press, 0px));
+  }
+
+  .keycap:active {
+    cursor: grabbing;
+  }
+
+  /* Registered so they can be transitioned. An unregistered custom property is
+     a string as far as the cascade is concerned and jumps rather than
+     interpolating. */
+  @property --rx { syntax: '<angle>'; initial-value: 58deg; inherits: false; }
+  @property --ry { syntax: '<angle>'; initial-value: -30deg; inherits: false; }
+  @property --press { syntax: '<length>'; initial-value: 0px; inherits: false; }
+
+  .keycap.is-settling {
+    transition: --rx var(--dur-slow) var(--ease-spring),
+      --ry var(--dur-slow) var(--ease-spring);
+  }
+
+  .keycap.is-pressed {
+    animation: keypress 360ms var(--ease-spring);
+  }
+
+  /* Down 5px and back, with the spring carrying a little overshoot past rest
+     on the way up, which is what a real cap does on release. */
+  @keyframes keypress {
+    0% { --press: 0px; }
+    40% { --press: -5px; }
+    100% { --press: 0px; }
+  }
+
+  .k-face {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 1px solid var(--color-grid);
+  }
+
+  /* The top is the lit surface, so it takes the raised token. The walls step
+     down through page and recessed, which is the same elevation ramp the rest
+     of the site uses and is why this holds in both themes without a second
+     palette. */
+  .k-top {
+    width: var(--cap);
+    height: var(--cap);
+    top: calc((var(--base) - var(--cap)) / 2);
+    left: calc((var(--base) - var(--cap)) / 2);
+    transform: translateZ(var(--rise));
+    background-color: var(--color-raised);
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+  }
+
+  /* Flipped so its outward normal points down, and culled when it does, which
+     is what stops the underside's edge peeking out around the base at rest.
+     Drag the cap over far enough and it is there. */
+  .k-bottom {
+    width: var(--base);
+    height: var(--base);
+    background-color: color-mix(in oklab, var(--color-paper) 50%, var(--color-paper-2));
+    transform: translateZ(0) rotateX(180deg);
+    backface-visibility: hidden;
+  }
+
+  /* Front and right catch the light, back and left fall away. Every face is a
+     different value and none of them is the plinth, so the solid reads as a
+     solid whichever way it is turned. */
+  .k-wall {
+    width: var(--base);
+    height: var(--wall);
+    transform-origin: 50% 0;
+    background-color: color-mix(in oklab, var(--color-raised) 62%, var(--color-paper));
+    /* Trapezoid: full width where it meets the base, inset where it meets the
+       top, so the four walls meet at the corners instead of overlapping. */
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      calc(100% - var(--inset)) 100%,
+      var(--inset) 100%
+    );
+  }
+
+  /* Each wall is moved to the base centre, spun to its edge, pushed back out,
+     stood up, then leaned in. */
+  .k-wall-n {
+    transform: translateY(calc(var(--base) / 2)) rotateZ(0deg)
+      translateY(calc(var(--base) / -2)) rotateX(calc(90deg - var(--lean)));
+  }
+
+  .k-wall-e {
+    transform: translateY(calc(var(--base) / 2)) rotateZ(90deg)
+      translateY(calc(var(--base) / -2)) rotateX(calc(90deg - var(--lean)));
+  }
+
+  .k-wall-s {
+    transform: translateY(calc(var(--base) / 2)) rotateZ(180deg)
+      translateY(calc(var(--base) / -2)) rotateX(calc(90deg - var(--lean)));
+  }
+
+  .k-wall-w {
+    transform: translateY(calc(var(--base) / 2)) rotateZ(270deg)
+      translateY(calc(var(--base) / -2)) rotateX(calc(90deg - var(--lean)));
+  }
+
+  .k-wall-n,
+  .k-wall-w {
+    background-color: var(--color-paper);
+  }
+
+  .legend {
+    fill: none;
+    stroke: var(--color-ink-2);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Static under reduced motion: it keeps its resting angle and stops
+     responding to the pointer. The script returns early as well, so no
+     listener is even attached. */
+  @media (prefers-reduced-motion: reduce) {
+    .keycap {
+      cursor: default;
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+</style>

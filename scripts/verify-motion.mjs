@@ -11,7 +11,7 @@ const mode = process.argv[3] ?? 'normal';
 
 const routes = ['/', '/work', '/work/sieve', '/work/gatekeepnt', '/work/atctm',
   '/work/moodlens', '/work/moodinsight', '/papers', '/teaching', '/notes',
-  '/about', '/404'];
+  '/about', '/contact', '/404'];
 
 // Simulates a browser without scroll-driven animation support by neutralising
 // every timeline, which is what the @supports fallback does.

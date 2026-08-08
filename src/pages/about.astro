@@ -4,6 +4,7 @@
 import Card from '../components/Card.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import Skills from '../components/Skills.astro';
+import Keycap from '../components/Keycap.astro';
 import Shell from '../layouts/Shell.astro';
 ---
 <Shell
@@ -74,13 +75,6 @@ import Shell from '../layouts/Shell.astro';
       </p>
     </Card>
 
-    <Card>
-      <h3 class="card-heading">Work authorization</h3>
-      <p class="card-body">
-        F-1 student, CPT eligible. Earliest internship or co-op start is January
-        2027. Primary target is Summer 2027.
-      </p>
-    </Card>
   </div>
 
   <section class="section" aria-labelledby="skills-heading">
@@ -101,11 +95,14 @@ import Shell from '../layouts/Shell.astro';
 
   <section class="section" aria-labelledby="interests-heading">
     <SectionHeading id="interests-heading" solid="Outside" ghost="Coursework" />
-    <p class="section-lede section-body">
-      Photography and cinematic colour grading, mechanical keyboard building,
-      and a long-running interest in the philosophy of machine consciousness and
-      technological singularity, mostly through books rather than code.
-    </p>
+    <div class="interests section-body">
+      <p class="section-lede">
+        Photography and cinematic colour grading, mechanical keyboard building,
+        and a long-running interest in the philosophy of machine consciousness and
+        technological singularity, mostly through books rather than code.
+      </p>
+      <Keycap />
+    </div>
   </section>
 
   <section class="section" aria-labelledby="reach-heading">
@@ -122,6 +119,20 @@ import Shell from '../layouts/Shell.astro';
 </Shell>
 
 <style>
+  /* The keycap sits beside the interests line, not under a heading of its own.
+     It is a reward for having scrolled this far, not a feature. */
+  .interests {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 2rem 3rem;
+  }
+
+  .interests .section-lede {
+    flex: 1 1 28ch;
+    margin: 0;
+  }
+
   .section-body {
     margin-top: 2.5rem;
   }

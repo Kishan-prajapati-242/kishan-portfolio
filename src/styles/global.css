@@ -1144,7 +1144,7 @@
 
 .card:hover,
 .card:has(:focus-visible) {
-  translate: 0 -2px;
+  translate: 0 -5px;
 }
 
 button {
@@ -1301,13 +1301,22 @@ button:active {
   .project-card:hover,
   .project-card:has(:focus-visible),
   .card:hover,
-  .card:has(:focus-visible) {
+  .card:has(:focus-visible),
+  .rows > .row:hover,
+  .rows > .row:has(:focus-visible),
+  .skills .item:hover,
+  .skills .item:has(:focus-visible),
+  .data-table.is-card:hover,
+  .data-table.is-card:has(:focus-visible),
+  .badge:hover,
+  .badge:has(:focus-visible) {
     translate: none !important;
   }
 
   .stat-cell:hover,
   .stat-cell:has(:focus-visible) {
     scale: none !important;
+    translate: none !important;
   }
 
   .project-card:hover .art img,
@@ -1436,7 +1445,7 @@ button:active {
 
 .project-card:hover,
 .project-card:has(:focus-visible) {
-  translate: 0 -3px;
+  translate: 0 -5px;
 }
 
 .project-card .art img {
@@ -1448,7 +1457,7 @@ button:active {
 
 .project-card:hover .art img,
 .project-card:has(:focus-visible) .art img {
-  scale: 1.06;
+  scale: 1.09;
   filter: saturate(1);
 }
 
@@ -1486,14 +1495,50 @@ button:active {
   }
 }
 
-/* 6. Spotlight. --mx and --my are written by a rAF-throttled pointermove
-   listener; with no JavaScript the layer simply never becomes visible. */
-.project-card {
+/* ---- The interactive surface --------------------------------------------
+   One list, every card on the site. It used to be project cards only, which
+   meant a visitor learned the site responds to the pointer and then found that
+   most of it does not.
+
+   The group is a selector list rather than a shared class, because these are
+   already distinguishable by what they are: Card.astro's .card covers the
+   project, capability, paper, teaching, about and contact cards in one, and
+   the rest are the shapes that were behaving as cards without being one.
+
+   Everything in the group gets the lift, the accent border and the spotlight.
+   The image zoom is the one part that is card-specific, because most of these
+   have no image, and its absence is why the group is defined by class rather
+   than by asking whether an <img> is present. */
+
+.card,
+.stat-cell,
+.data-table.is-card,
+.rows > .row,
+.skills .item,
+.badge {
   position: relative;
   isolation: isolate;
 }
 
-.project-card::before {
+/* 6. Spotlight, delegated. --mx and --my are written by a single pointermove
+   listener on <main>, in Base.astro. It used to be one listener per project
+   card; at the sizes this now covers that would be roughly seventy listeners
+   on /about alone, all doing the same work. One listener and a closest() call
+   is the right shape, and it costs less than the five it replaced.
+
+   With no JavaScript the layer simply never becomes visible: --mx and --my
+   fall back to 50% and the opacity stays 0, so nothing depends on the script
+   running.
+
+   The radius grew from 240px to 340px and the wash from --color-plot-soft to a
+   mix carrying more accent. Against the old flat page a soft wash was legible
+   because it was the only thing happening; on the raised surface it was
+   competing with the elevation step and disappeared. */
+.card::before,
+.stat-cell::before,
+.data-table.is-card::before,
+.rows > .row::before,
+.skills .item::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1501,16 +1546,63 @@ button:active {
   border-radius: inherit;
   opacity: 0;
   background: radial-gradient(
-    240px circle at var(--mx, 50%) var(--my, 50%),
-    var(--color-plot-soft),
-    transparent 70%
+    340px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in oklab, var(--color-plot) 16%, var(--color-raised)),
+    transparent 72%
   );
   transition: opacity var(--dur-fast) var(--ease-spring);
 }
 
-.project-card:hover::before,
-.project-card:has(:focus-visible)::before {
+.card:hover::before,
+.card:has(:focus-visible)::before,
+.stat-cell:hover::before,
+.stat-cell:has(:focus-visible)::before,
+.data-table.is-card:hover::before,
+.data-table.is-card:has(:focus-visible)::before,
+.rows > .row:hover::before,
+.rows > .row:has(:focus-visible)::before,
+.skills .item:hover::before,
+.skills .item:has(:focus-visible)::before {
   opacity: 1;
+}
+
+/* Rows are hairline-separated list items rather than bordered boxes, so they
+   take the spotlight and the lift but keep their rules. The inline padding
+   gives the spotlight somewhere to land instead of stopping at the text. */
+.rows > .row {
+  padding-inline: 12px;
+  border-radius: var(--radius-card);
+  transition: translate var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) var(--ease-spring);
+}
+
+.rows > .row:hover,
+.rows > .row:has(:focus-visible) {
+  translate: 0 -5px;
+}
+
+/* Skill items are small and there are forty of them, so they lift half as far
+   and take a padded hit area rather than growing the layout. */
+.skills .item {
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: var(--radius-control);
+  transition: translate var(--dur-micro) var(--ease-spring);
+}
+
+.skills .item:hover,
+.skills .item:has(:focus-visible) {
+  translate: 0 -3px;
+}
+
+.data-table.is-card {
+  transition: border-color var(--dur-fast) var(--ease-spring),
+    translate var(--dur-fast) var(--ease-spring);
+}
+
+.data-table.is-card:hover,
+.data-table.is-card:has(:focus-visible) {
+  translate: 0 -5px;
 }
 
 /* The border beam is gone. It was a conic gradient masked to a 1px ring around

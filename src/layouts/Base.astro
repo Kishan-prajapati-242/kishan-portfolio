@@ -70,6 +70,51 @@ const { title, description, ogType, jsonLdPerson } = Astro.props;
       <slot />
     </main>
     <Footer />
+    <script>
+      // Spotlight, one listener for the whole document.
+      //
+      // This used to be a listener per project card. Once the effect covers
+      // every card, that shape becomes about seventy listeners on /about, all
+      // computing the same thing, so it is one delegated listener on <main>
+      // that finds the surface under the pointer with closest().
+      //
+      // Throttled to one write per frame. pointermove fires far faster than
+      // the compositor can use, and --mx and --my only matter once per paint.
+      //
+      // Nothing depends on this running: the custom properties fall back to
+      // 50% and the spotlight layer sits at opacity 0 until CSS hover raises
+      // it, so with no JavaScript the cards simply light from their centres.
+      const SURFACES =
+        '.card, .stat-cell, .data-table.is-card, .rows > .row, .skills .item';
+
+      document.addEventListener('astro:page-load', () => {
+        const main = document.getElementById('main');
+        if (!main || main.dataset.spot === 'on') return;
+        main.dataset.spot = 'on';
+
+        let frame = 0;
+        let pending: { el: HTMLElement; x: number; y: number } | null = null;
+
+        main.addEventListener(
+          'pointermove',
+          (e) => {
+            const el = (e.target as Element | null)?.closest<HTMLElement>(SURFACES);
+            if (!el) return;
+            pending = { el, x: e.clientX, y: e.clientY };
+            if (frame) return;
+            frame = requestAnimationFrame(() => {
+              frame = 0;
+              if (!pending) return;
+              const { el: target, x, y } = pending;
+              const r = target.getBoundingClientRect();
+              target.style.setProperty('--mx', `${x - r.left}px`);
+              target.style.setProperty('--my', `${y - r.top}px`);
+            });
+          },
+          { passive: true }
+        );
+      });
+    </script>
   </body>
 </html>
 

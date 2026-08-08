@@ -106,27 +106,6 @@ const highlight = showMeasurement ? highlights[entry.id] : undefined;
   </p>
 </Card>
 
-<script>
-  // Spotlight. Writes --mx and --my on the hovered card, throttled to one
-  // write per frame. With no JavaScript the layer never becomes visible, so
-  // nothing depends on this running.
-  document.addEventListener('astro:page-load', () => {
-    for (const card of document.querySelectorAll<HTMLElement>('.project-card')) {
-      if (card.dataset.spot === 'on') continue;
-      card.dataset.spot = 'on';
-      let frame = 0;
-      card.addEventListener('pointermove', (e) => {
-        if (frame) return;
-        frame = requestAnimationFrame(() => {
-          frame = 0;
-          const r = card.getBoundingClientRect();
-          card.style.setProperty('--mx', `${e.clientX - r.left}px`);
-          card.style.setProperty('--my', `${e.clientY - r.top}px`);
-        });
-      });
-    }
-  });
-</script>
 
 <style>
   .project-card {

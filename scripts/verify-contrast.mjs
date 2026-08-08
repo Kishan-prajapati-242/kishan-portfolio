@@ -21,7 +21,7 @@ const AA_LARGE = 3.0;
 
 const routes = ['/', '/work', '/work/sieve', '/work/gatekeepnt', '/work/atctm',
   '/work/moodlens', '/work/moodinsight', '/papers', '/teaching', '/notes',
-  '/about', '/404'];
+  '/about', '/contact', '/404'];
 
 // Two pairs fail and are known, recorded in DESIGN.md section 2 and in D-130.
 // Both predate the elevation work and both need a design call rather than a
@@ -165,7 +165,7 @@ for (const theme of ['light', 'dark']) {
 }
 
 console.log(`\nFAILURES (AA ${AA} normal, ${AA_LARGE} large)`);
-if (!findings.length) console.log('  none across 12 routes in both themes');
+if (!findings.length) console.log(`  none across ${routes.length} routes in both themes`);
 const seen = new Set();
 for (const f of findings) {
   const key = `${f.theme}|${f.sel}|${f.fg}|${f.bg}`;

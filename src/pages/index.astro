@@ -9,6 +9,7 @@ import SkillsMarquee from '../components/SkillsMarquee.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import Shell from '../layouts/Shell.astro';
+import { AVAILABILITY_SHORT } from '../data/availability';
 
 const art = import.meta.glob<{ default: ImageMetadata }>(
   '../assets/work/*.{png,jpg,jpeg,webp}',
@@ -57,6 +58,11 @@ const papers = [
   jsonLdPerson
   description="MS Computer Science at Northeastern. I build retrieval and NLP systems and measure them carefully. Papers, engineering notes, and a search system over 182,853 papers built on a fanless laptop."
 >
+  <p class="badge">
+    <span class="badge-dot" aria-hidden="true"></span>
+    <a href="/contact">{AVAILABILITY_SHORT}</a>
+  </p>
+
   <SectionHeading as="h1" solid="Software" ghost="Engineer" />
   <p class="display-lede illuminate">
     {ledeWords.map((w, i) => (
@@ -215,6 +221,50 @@ const papers = [
     margin-top: 2rem;
   }
 
+  /* The availability badge, above the h1. It is the first thing on the site
+     and it is a link to /contact, not a decorative pill: someone who reads it
+     and wants to act should not then have to go looking. */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1.5rem;
+    padding: 7px 14px 7px 12px;
+    border: 1px solid var(--color-grid);
+    border-radius: 999px;
+    background-color: var(--color-raised);
+    box-shadow: var(--shadow-raised);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    transition: border-color var(--dur-fast) var(--ease-spring),
+      translate var(--dur-fast) var(--ease-spring);
+  }
+
+  .badge:hover,
+  .badge:has(:focus-visible) {
+    border-color: var(--color-plot);
+    translate: 0 -2px;
+  }
+
+  .badge a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .badge a:hover,
+  .badge a:focus-visible {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+
+  .badge-dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background-color: var(--color-plot);
+  }
+
   .stat-cell {
     padding: 16px 18px;
     border: 1px solid var(--color-grid);
@@ -223,6 +273,7 @@ const papers = [
     box-shadow: var(--shadow-raised);
     transition: border-color var(--dur-fast) var(--ease-spring),
       scale var(--dur-fast) var(--ease-spring),
+      translate var(--dur-fast) var(--ease-spring),
       box-shadow var(--dur-fast) var(--ease-spring);
   }
 
@@ -236,6 +287,7 @@ const papers = [
   .stat-cell:has(:focus-visible) {
     border-color: var(--color-plot);
     scale: 1.02;
+    translate: 0 -5px;
     box-shadow: var(--shadow-raised), inset 0 1px 0 0 var(--color-plot-soft);
   }
 

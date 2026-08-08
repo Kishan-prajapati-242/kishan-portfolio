@@ -2,10 +2,13 @@
 // Footer copy from CONTENT.md section 10. Links from CONTENT.md section 1.
 // The "Source at" line is omitted until the repo is public and is added in
 // Phase 6, per D-013. The build date is generated, never hardcoded.
+import { AVAILABILITY_FULL } from '../data/availability';
+
 const buildDate = new Date().toISOString().slice(0, 10);
 ---
 <footer class="site-footer">
   <div class="shell">
+    <p class="availability">{AVAILABILITY_FULL}</p>
     <p class="t-small who">
       <span>Kishan Prajapati, Boston.</span>
       <a href="mailto:prajapati.kish@northeastern.edu">prajapati.kish@northeastern.edu</a>
@@ -26,6 +29,17 @@ const buildDate = new Date().toISOString().slice(0, 10);
     border-top: 1px solid var(--color-grid);
     padding-block: 2rem;
     color: var(--color-ink-2);
+  }
+
+  /* Availability sits above the contact line and reads at body size rather
+     than small print. Someone may land on any page of this site before they
+     see a LinkedIn profile, so what he is looking for cannot be a footnote. */
+  .availability {
+    margin: 0 0 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--color-grid);
+    max-width: 62ch;
+    color: var(--color-ink);
   }
 
   .who {

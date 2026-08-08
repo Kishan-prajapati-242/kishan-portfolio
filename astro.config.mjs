@@ -7,9 +7,8 @@ import mdx from '@astrojs/mdx';
 
 // https://astro.build/config
 export default defineConfig({
-  // Placeholder domain so @astrojs/sitemap can build. Phase 6 corrects this
-  // once the real Vercel domain exists.
-  site: 'https://kishan-prajapati.vercel.app',
+  // Every canonical, og:url, og:image and sitemap entry is derived from this.
+  site: 'https://kishan-portfolio-three.vercel.app',
 
   vite: {
     plugins: [tailwindcss()],

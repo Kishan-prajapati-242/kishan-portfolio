@@ -963,4 +963,16 @@ Not optional, and not something to announce in the UI.
 - Dark mode via a `class` on `html`, toggled by a button, persisted, defaulting to the system preference. Set the class before first paint with a tiny inline script in `<head>` so there is no flash.
 - Colour is never the only carrier of meaning. The `unmeasured` state also says the word `null`, and the `withdrawn` state also says the word `WITHDRAWN`.
 - Lighthouse targets on the deployed build: 100 accessibility, 100 best practices, 100 SEO, performance 95 or above on mobile.
-- Total client-side JavaScript under 10 KB gzipped. The only JS on the site is the theme toggle and the mobile nav. If a bundle analysis shows a framework runtime shipping, that is a bug.
+- Total client-side JavaScript under **16 KB gzipped on the worst route**, raised from 10 KB when the contact form and the keycap were added. If a bundle analysis shows a framework runtime shipping, that is still a bug: nothing here needs one.
+
+  Measured by `scripts/js-budget.mjs`, which attributes every inline block and counts JSON-LD separately, because structured data the browser never executes does not belong in a JavaScript budget.
+
+  Worst route is `/contact` at **8,037 bytes**, leaving 8,347 bytes of headroom. What each route carries above the lightest one:
+
+  | addition | route | gzipped |
+  |---|---|---|
+  | contact form, validation and copy button | `/contact` | 1,039 |
+  | keycap, drag and press | `/about` | 570 |
+  | case study rail observer | the five case studies | 361 |
+
+  The shared floor of 6,998 bytes is the router, the pre-paint theme script, the theme toggle, the mobile nav and the delegated spotlight. The spotlight is 356 bytes for the whole site: it was one listener per project card and is now one on `<main>`, which is what let it grow from five cards to every card on the site without the cost growing with it.

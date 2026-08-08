@@ -675,10 +675,14 @@ AWS Fundamentals Specialization, Amazon Web Services, April 2024. Building Web A
 ### Interview prep, one line
 Over 400 LeetCode problems solved, working NeetCode 150 as the spine.
 
-### Work authorization line, exactly this and nowhere else on the site
+### Availability, exactly this
 ```
-F-1 student, CPT eligible. Earliest internship or co-op start is January 2027. Primary target is Summer 2027.
+Open to software engineering internships and co-ops. Available from January 2027, with Summer 2027 as my main target. F-1 student, CPT and OPT eligible.
 ```
+This replaces the earlier work-authorization line so there is one version. It appears in three places and nowhere else:
+- the hero badge, shortened to `Open to SWE internships, from January 2027`
+- `/contact`, in full and prominent
+- the footer, in full, on every page
 
 ### Interests, keep it to two sentences maximum
 ```
