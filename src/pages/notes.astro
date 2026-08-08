@@ -234,6 +234,10 @@ const perf = [
     font-family: var(--font-mono);
     font-size: 0.9em;
     background-color: var(--color-paper-2);
+    /* Full-strength ink, never inherited. Inline code sits on the recessed
+       surface, and inheriting a provenance caption's ink-3 there is the one
+       place ink-3 could land on the darkest surface and fail AA. */
+    color: var(--color-ink);
     padding: 0.1em 0.3em;
     border-radius: var(--radius-control);
   }

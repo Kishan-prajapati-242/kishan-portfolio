@@ -86,7 +86,14 @@ const meta = [
           </div>
         </dl>
 
-        <div class="prose">
+        {/* is-longform switches off the paragraph reveal. A case study with
+            h2 sections is something you read straight through, and prose
+            fading in as you scroll fights the reading. The four short case
+            studies have no headings at all and are three or four paragraphs
+            long, where the reveal reads as the page arriving rather than as
+            the text moving while you read it. The heading count is the signal
+            because it is the thing that actually distinguishes them. */}
+        <div class:list={['prose', sections.length > 0 && 'is-longform']}>
           <slot />
         </div>
     </div>
@@ -287,6 +294,10 @@ const meta = [
     font-family: var(--font-mono);
     font-size: 0.9em;
     background-color: var(--color-paper-2);
+    /* Full-strength ink, never inherited. Inline code sits on the recessed
+       surface, and inheriting a provenance caption's ink-3 there is the one
+       place ink-3 could land on the darkest surface and fail AA. */
+    color: var(--color-ink);
     padding: 0.1em 0.3em;
     border-radius: var(--radius-control);
   }

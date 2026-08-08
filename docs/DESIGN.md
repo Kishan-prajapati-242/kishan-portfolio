@@ -34,27 +34,29 @@ Define these in `src/styles/global.css` inside a Tailwind 4 `@theme` block. Cont
 
 ### Light, the default
 ```css
---color-paper:     #F6F8F6;  /* cool, faintly green-shifted white. NOT cream. */
---color-paper-2:   #ECF0EE;  /* recessed panels, table header rows */
---color-grid:      #D3DFD9;  /* graph rule */
---color-ink:       #16201C;  /* body and headings. 15:1 */
---color-ink-2:     #57635D;  /* secondary prose. 6.3:1 */
---color-ink-3:     #656F6A;  /* provenance captions. 4.9:1, do not lighten */
+--color-paper:     #EFF3F1;  /* page. L* 95.5 */
+--color-raised:    #FCFDFC;  /* cards, panels, nav pill, anything lifted. L* 99.2 */
+--color-paper-2:   #E1E8E4;  /* recessed: table header rows, chrome, code. L* 91.4 */
+--color-grid:      #CFDCD6;  /* hairline */
+--color-ink:       #16201C;  /* body and headings. 16.4:1 on raised */
+--color-ink-2:     #57635D;  /* secondary prose. 6.2:1 on raised */
+--color-ink-3:     #626C67;  /* provenance captions. 5.3:1 on raised */
 --color-null:      #A9B4AE;  /* the unmeasured state. Decorative glyphs only. */
 --color-plot:      #1B4D42;  /* links, operating point marker, primary accent. 9.1:1 */
 --color-plot-soft: #E2EDE8;  /* accent wash behind active nav, quoted blocks */
---color-annot:     #8A6A1F;  /* ochre. Caveats and limitations only. 4.8:1 */
+--color-annot:     #816315;  /* ochre. Caveats and limitations only. 5.0:1 on page */
 --color-withdrawn: #A63A2E;  /* withdrawn or thrown-out measurements only. 6.2:1 */
 ```
 
 ### Dark
 ```css
---color-paper:     #0E1412;
---color-paper-2:   #161E1B;
---color-grid:      #1F2A26;
+--color-paper:     #111815;  /* page. L* 7.5 */
+--color-raised:    #1F2B26;  /* cards. L* 16.3 */
+--color-paper-2:   #070B0A;  /* recessed. L* 2.8 */
+--color-grid:      #33403B;
 --color-ink:       #E3E9E5;
 --color-ink-2:     #9AA6A0;
---color-ink-3:     #7C8882;
+--color-ink-3:     #889490;
 --color-null:      #4C5651;
 --color-plot:      #5FBFA6;
 --color-plot-soft: #16302A;
@@ -66,7 +68,45 @@ Define these in `src/styles/global.css` inside a Tailwind 4 `@theme` block. Cont
 - `--color-annot` is only ever used for caveats and limitations. Never for a link, never for a button, never decoratively.
 - `--color-withdrawn` is only ever used on the notes page and on withdrawn measurement values. If it appears anywhere else, that is a bug.
 - There is no fourth accent. Do not add one.
-- No gradients anywhere. No shadows except a single 1px hairline used as a border. No glassmorphism, no blur, no glow.
+- No gradients on surfaces. No glassmorphism, no glow.
+- `--color-ink-3` must not reduce contrast against any surface it sits on, and must stay clear of `--color-ink-2`. The two are a hierarchy: under about 3 L* apart they stop reading as different tiers. It currently sits 3.9 L* above ink-2 in light and 6.8 below in dark. This replaces the earlier wording, "do not lighten", which was a sloppy encoding of the intent: the direction never mattered, the contrast and the tier gap do.
+- `--color-ink-3` never sits on `--color-paper-2`. That is why inline `code`, which is the one place it could be inherited onto the recessed surface, pins itself to `--color-ink`.
+
+### Elevation
+
+Three surface levels. Before this the page, every card and every container were the identical hex, separated only by a hairline, and the site read as one flat field. That got worse when the graph paper went, because cards lost the thing they used to sit against.
+
+| level | job |
+|---|---|
+| `--color-paper-2` | cut into the page: table header rows, browser chrome bars, inline code, image placeholders |
+| `--color-paper` | the page itself |
+| `--color-raised` | sitting on the page: cards, data table panels, the profile sidebar, the nav pill, stat cells |
+
+Steps, in CIE L\*, which is the axis that answers "can I see that these two large areas are different":
+
+| | recessed to page | page to raised |
+|---|---|---|
+| light | 4.1 | 3.7 |
+| dark | 4.7 | **8.8** |
+
+**The asymmetry is deliberate.** Light has a soft shadow doing half the work of lifting a card off the page. Dark has none, because a soft shadow on a dark field is either invisible or a grey halo, so the whole job falls to the lightness step and the hairline. Dark also has the headroom to spend and light does not.
+
+**Light cannot go further, and the reason is worth recording.** The ramp is boxed between near-white at the top and, at the bottom, the point where `--color-ink-3` stops passing AA. Every surface carrying ink-3 text must sit at L\* 92.9 or lighter, which leaves about 6.7 L\* of usable range for two steps. Pushing past that needs ink-3 to darken, and ink-3 cannot darken without merging into ink-2 and collapsing the two secondary tiers into one. The only remaining lever would be moving ink-2 as well, which is a bigger change than this one and has not been made.
+
+**A shadow is now allowed on raised surfaces**, which reverses the earlier blanket ban. That ban made sense when the page carried a printed grid for cards to sit against. Without it the shadow does more work than a second border would. Very soft, two layers, tinted with the ink colour rather than pure black so it stays in the family, and light mode only:
+
+```css
+--shadow-raised: 0 1px 2px rgb(22 32 28 / 0.04), 0 6px 16px -6px rgb(22 32 28 / 0.10);
+```
+
+### Verifying contrast
+
+`scripts/verify-contrast.mjs` walks every rendered text node on every route in both themes, resolves the background the browser actually paints by walking up through translucent ancestors, and reports the worst ratio that occurs. It measures pairs that exist rather than a matrix of every token against every surface: the matrix says ink-3 on recessed fails while the site never puts it there, and it says nothing about the pairs that arise through inheritance, which is where the real failures hide.
+
+Two known failures, both predating the elevation work and both governed by decisions above this one, so neither was quietly changed:
+
+- **The ghosted display line**, 1.50:1. Section 4 specifies the second line of the two-tone heading at 18 percent of ink. It is a real word in a real heading, so WCAG's incidental-text exemption does not obviously cover it. Unchanged by elevation: the ghost is mixed from the page colour, so the ratio moves with it.
+- **The `unmeasured` state**, 1.91:1 light and 2.37:1 dark. `--color-null` is documented here as "decorative glyphs only" but renders the word `null` at 16px. Elevation moved these from 2.00 and 2.45, a change too small to matter against a shortfall of more than two ratio points, so the token was left alone rather than churned.
 
 ---
 
@@ -186,8 +226,8 @@ in `global.css`.
 
 Per D-045 the site is built from containers rather than one continuous scroll. This supersedes any part of this section that assumed a single flowing column.
 
-- 1px `--color-grid` border, `3px` radius, `--color-paper` background so the card reads as sitting on the graph paper, `24px` internal padding, `20px` gap between cards.
-- On `:hover` and `:focus-within` the border becomes `--color-plot` over `120ms`. That is the entire interaction. No shadow, no lift, no scale, no background change.
+- 1px `--color-grid` border, `--radius-card` radius, `--color-raised` background and `--shadow-raised`, `24px` internal padding, `20px` gap between cards. The background was `--color-paper`, which made the card the same colour as the page it sat on; see the elevation subsection of section 2.
+- Hover is a layered gesture, not a border change: see section 7. The single-property version described here was superseded by the hover system, and the no-shadow clause by elevation.
 - **Never put a card inside a card.** A `Measurement`, a `Caveat`, a table or a chip row inside a card is fine, because none of them is a card.
 
 **Project card contents, top to bottom:** a 16:9 image slot at full card width using the empty-slot treatment when no PNG exists, the title at `--text-h2`, a one-line summary, a row of chips, one `Measurement` block carrying the most striking number for that project, and a "read the case study" link.
@@ -704,15 +744,29 @@ routes had essentially no scroll motion:
 The complaint that the sub-pages had none was right about `/notes` and four of
 the five case studies and wrong about those two.
 
-Prose now reveals in two weights. Landmarks, the things you scan for, rise
-28px: headings, figures, tables, lists, quotes and code blocks. Body paragraphs
-rise 16px and finish earlier, at `cover 36%`, so a paragraph is settled well
-before it reaches the line being read.
+Prose reveals in two weights. Landmarks, the things you scan for, rise 28px on
+every page: headings, figures, tables, lists, quotes, code blocks and
+measurement blocks. Body paragraphs rise 16px and finish earlier, at
+`cover 36%`, so a paragraph is settled well before it reaches the line being
+read.
 
 Paragraphs are included after **counting what is actually on the pages**: four
 of the five case studies contain no headings at all, only paragraphs and a
 single list, so a landmarks-only rule left them with one animated element each.
 This is coverage of the existing reveal, not a new technique.
+
+**Paragraphs do not move on the two long-form pages.** On a page of three or
+four paragraphs the reveal reads as the page arriving. On `/notes` and
+`/work/sieve`, which are read straight through, text fading in as you scroll
+fights the reading: the thing you are moving toward is never still. Those two
+get landmarks only.
+
+The switch is the heading count, because that is what actually separates the
+long pages from the short ones. `CaseStudy.astro` adds `is-longform` to
+`.prose` when the entry has `h2` sections, and `/notes` is excluded wholesale
+since the entire page is long-form. Verified per route: `/work/sieve` animates
+0 of 39 paragraphs and 24 of 24 landmarks, `/notes` 0 of 17 and 8 of 8, and
+each short case study animates all of its paragraphs.
 
 ### The persisted sidebar
 

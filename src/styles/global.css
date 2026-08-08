@@ -8,17 +8,32 @@
 @import "tailwindcss";
 
 @theme {
-  /* Colour tokens, light, DESIGN.md section 2 */
-  --color-paper: #F6F8F6; /* cool, faintly green-shifted white. NOT cream. */
-  --color-paper-2: #ECF0EE; /* recessed panels, table header rows */
-  --color-grid: #D3DFD9; /* graph rule */
-  --color-ink: #16201C; /* body and headings. 15:1 */
-  --color-ink-2: #57635D; /* secondary prose. 6.3:1 */
-  --color-ink-3: #656F6A; /* provenance captions. 4.9:1, do not lighten */
+  /* Colour tokens, light, DESIGN.md section 2.
+
+     Three surface levels, D-123. --color-paper is the page, --color-raised is
+     anything sitting on it, --color-paper-2 is anything cut into it. The page
+     moved down and cards moved up to near-white so there is somewhere for a
+     card to sit: before this the page and every card were the identical hex,
+     separated only by a hairline. */
+  --color-paper: #EFF3F1; /* page. L* 95.5 */
+  --color-raised: #FCFDFC; /* cards, panels, nav pill, anything lifted. L* 99.2 */
+  --color-paper-2: #E1E8E4; /* recessed: table header rows, chrome, code. L* 91.4 */
+  --color-grid: #CFDCD6; /* hairline */
+  --color-ink: #16201C; /* body and headings. 16.4:1 on raised */
+  --color-ink-2: #57635D; /* secondary prose. 6.2:1 on raised */
+  /* Provenance captions. Do not reduce contrast against any surface it sits
+     on, and keep it clear of ink-2: the two are a hierarchy, and at under
+     about 3 L* apart they stop reading as different. This sits 3.9 above
+     ink-2 and never lands on the recessed surface. */
+  --color-ink-3: #626C67;
   --color-null: #A9B4AE; /* the unmeasured state. Decorative glyphs only. */
   --color-plot: #1B4D42; /* links, operating point marker, primary accent. 9.1:1 */
   --color-plot-soft: #E2EDE8; /* accent wash behind active nav, quoted blocks */
-  --color-annot: #8A6A1F; /* ochre. Caveats and limitations only. 4.8:1 */
+  /* Ochre. Caveats and limitations only. 5.0:1 on the page, 5.5 on raised,
+     4.5 on recessed. Darkened three steps from #8A6A1F when the page moved
+     down for elevation: it had been 4.73 against the old paper and fell to
+     4.51 against the new one, which passes AA by 0.01 and is not a margin. */
+  --color-annot: #816315;
   --color-withdrawn: #A63A2E; /* withdrawn or thrown-out measurements only. 6.2:1 */
 
   /* Faces, DESIGN.md section 3. IBM Plex Mono has no variable build,
@@ -89,6 +104,13 @@
   --dur-base: 600ms;
   --dur-slow: 1000ms;
   --dur-hero: 1300ms;
+
+  /* A shadow is allowed on raised surfaces now that the graph paper is gone.
+     It was banned when the page had a printed grid to sit against; without
+     that, the shadow does more work than a second border would. Very soft, two
+     layers, no offset beyond the vertical, and tinted with the ink colour
+     rather than pure black so it stays in the family. */
+  --shadow-raised: 0 1px 2px rgb(22 32 28 / 0.04), 0 6px 16px -6px rgb(22 32 28 / 0.10);
 }
 
 /* Dark tokens, DESIGN.md section 2. Applied via the .dark class on html,
@@ -101,12 +123,23 @@
    raise this to html.dark. Keep both token blocks at flat specificity so
    either one can be overridden later without an escalation. */
 .dark {
-  --color-paper: #0E1412;
-  --color-paper-2: #161E1B;
-  --color-grid: #1F2A26;
+  /* Dark carries a larger page-to-raised step than light, 8.8 L* against 3.7,
+     and that asymmetry is deliberate. Light has a shadow doing half the work
+     of separating a card from the page. Dark has no such thing, because a soft
+     shadow on a dark field is invisible, so the whole job falls to the surface
+     step and the hairline. Dark also has the headroom to spend: light is
+     boxed in between near-white and the point where ink-3 stops passing AA. */
+  --color-paper: #111815; /* page. L* 7.5 */
+  --color-raised: #1F2B26; /* cards. L* 16.3 */
+  --color-paper-2: #070B0A; /* recessed. L* 2.8 */
+  --color-grid: #33403B;
   --color-ink: #E3E9E5;
   --color-ink-2: #9AA6A0;
-  --color-ink-3: #7C8882;
+  --color-ink-3: #889490;
+  /* No shadow in dark mode. A soft shadow needs something lighter than itself
+     to read against and there is nothing: on a dark page it is either
+     invisible or it becomes a grey halo. */
+  --shadow-raised: none;
   --color-null: #4C5651;
   --color-plot: #5FBFA6;
   --color-plot-soft: #16302A;
@@ -1008,18 +1041,11 @@
      scroll motion at all: four case studies and /notes. Audited across every
      route rather than assumed.
 
-     Two weights, because the pages differ enormously. Landmarks, the things
-     you scan for, get the full 28px rise. Body paragraphs get a gentler 16px,
-     and finish earlier, at cover 36%, so a paragraph is settled well before it
-     reaches the line you are actually reading.
-
-     Paragraphs are included after counting what is on the pages rather than
-     reasoning about it: four of the five case studies contain no headings at
-     all, only paragraphs and a single list, so a landmarks-only rule left them
-     with one animated element each. This is coverage of the existing reveal,
-     not a new technique. */
-  .prose > :is(h2, h3, figure, blockquote, ul, ol, pre, .data-table),
-  .story > :is(h2, h3, figure, blockquote, ul, ol, table, .withdrawn-pair) {
+     Landmarks, the things you scan for, get the full 28px rise on every page:
+     headings, figures, tables, lists, quotes, code blocks and measurement
+     blocks. */
+  .prose > :is(h2, h3, figure, blockquote, ul, ol, pre, .data-table, .measurement),
+  .story > :is(h2, h3, figure, blockquote, ul, ol, table, .withdrawn-pair, .data-table, .measurement) {
     opacity: 0;
     transform: translateY(28px);
     animation: reveal-up linear both;
@@ -1027,8 +1053,19 @@
     animation-range: cover 5% cover 40%;
   }
 
-  .prose > p,
-  .story > p {
+  /* Body paragraphs move only on the short pages, and only half as far,
+     finishing earlier at cover 36% so a paragraph is settled well before it
+     reaches the line being read.
+
+     The carve-out is the point. On a page of three or four paragraphs the
+     reveal reads as the page arriving. On /notes and /work/sieve, which are
+     long-form and read straight through, text fading in as you scroll fights
+     the reading: the thing you are moving toward is never still. Those two get
+     landmarks only. /notes is excluded wholesale because the whole page is
+     long-form; the case studies are switched by .is-longform, which
+     CaseStudy.astro sets when the entry has h2 sections, that being the thing
+     which actually distinguishes the long ones from the short ones. */
+  .prose:not(.is-longform) > p {
     opacity: 0;
     transform: translateY(16px);
     animation: reveal-up linear both;
