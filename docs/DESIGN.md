@@ -439,6 +439,53 @@ cell holding it arrives. The chain used to stop at three while the markup had
 four, which left the fourth cell on a 0s delay: it landed first, ahead of the
 three meant to precede it.
 
+### The range unit, and why reveals were invisible
+
+**Every scroll range on this site is expressed in `cover`, never in `entry`.**
+This is the single decision that made the reveals noticeable, and it is
+geometric rather than a matter of taste.
+
+An `entry` range runs from the element's leading edge touching the bottom of
+the scrollport to its trailing edge doing the same, so **the length of an entry
+range is the element's own height**. A percentage through it therefore lands at
+a completely different place on screen depending on how tall the element is.
+Measured on the deployed site under the old `entry 10% entry 70%`:
+
+| element | height, as a fraction of viewport | centre when the reveal finished |
+|---|---|---|
+| skill chip | 3% | **96%**, off the bottom edge |
+| project row | 13% | 47% |
+
+Same rule, same page, and a landing position anywhere between 47 and 96 percent
+depending only on element size. That is why the motion read as inconsistent and,
+for most elements, was simply never seen: it finished below where anyone looks.
+
+A `cover` range runs from the leading edge touching the bottom to the trailing
+edge passing the top, a length of viewport plus element, and **its midpoint is
+the element centred in the viewport whatever the element's height**. Completing
+at `cover 40%` puts the centre between 60 and 70 percent of viewport height
+across a thirty-fold range of heights. Measured after the change, across nine
+route and selector pairs: 53 to 71 percent. `scripts/audit-motion.mjs` checks
+this and fails anything outside 45 to 80.
+
+The old rule was accidentally right once. The last-screen override used
+`cover 50%`, and those were the only reveals anybody could see.
+
+**Travel is 40px on cards, up from 24px, and 64px on the lead element.** The
+earlier cap of 32px was written for time-based entrances and is wrong for
+scroll-driven ones, where the reader controls the speed and a short travel is
+not perceived as movement at all.
+
+**Four vocabularies, not one.** Uniform motion normalises: the eye stops
+registering it within about two sections. Cards rise and scale, list rows come
+in from alternating sides, prose landmarks rise, body paragraphs rise half as
+far and finish earlier. The lead element of every section travels further than
+its siblings, so there is somewhere to look rather than a flat field of equal
+movement. This is the same number of animations as before, with more range.
+
+**Reverse on scroll up is kept.** It is free with a scroll timeline and it is
+the behaviour Kishan asked to keep.
+
 ### Scroll reveals, per element
 
 ### The kit, seven techniques, one job each
@@ -561,6 +608,29 @@ cursor trails, jelly bounce, liquid fill, per-letter hover waves, equalizer
 bars, image swap on hover, grayscale to colour, spinning avatars, and
 `clip-path` morphs.
 
+**The border beam is removed**, and it is worth recording why, because it was
+built, shipped, found broken, fixed, and then deleted anyway.
+
+It was a conic gradient masked to a 1px ring around the Sieve card, sweeping
+three times on load. It shipped with the mask compositing as `add` rather than
+`exclude`, so instead of a ring the raw gradient painted across the whole card:
+a large dark wedge sweeping over the title, because `--color-plot` is a dark
+green. Two independent causes, both worth knowing. Lightning CSS silently drops
+the composite keyword out of the `mask` shorthand, so it has to be a longhand
+declaration. And `-webkit-mask` is an alias of `mask` in Blink, so the prefixed
+shorthand reset the composite back to `add` after the fact, while
+`-webkit-mask-composite: xor` is not in the standard value set at all.
+
+Fixing the mask worked, and the fixed version then argued for its own removal.
+Measured over a full revolution on a 338 by 628 card: **0.82 percent of the
+card's pixels change, all of them on the 1px perimeter**, with the interior
+provably static across ten sampled frames. Seven seconds of animation you
+notice only if you happen to be looking at the card edge. The job of pointing
+at the flagship project is already done by its position, its measurement block
+and its live demo link. Against that it cost three separate rendering traps and
+shipped a defect that damaged the page it existed to promote. **The failure mode
+was far worse than the upside**, which is the whole argument.
+
 The test, so the same judgement can be applied to anything not listed: a
 technique is out if it is cliché, hurts screen readers, is heavy, is
 off-palette, or reads as junior on a portfolio whose selling point is
@@ -617,6 +687,53 @@ scrolling, the marquee is the only thing still running on the time clock.
 `.reveal-label` appear zero times in the built markup across all twelve routes.
 They are kept as the documented escape hatch for new markup, and noted here so
 the next person does not read them as live.
+
+### Coverage, audited per route
+
+The reveal system reached card grids, list rows, section headings, skills and
+data tables, and nothing else. Prose was never covered, so five of the twelve
+routes had essentially no scroll motion:
+
+| route | scroll-driven elements, before |
+|---|---|
+| `/notes` | 0 with a range. Uses `.story`, `.hook`, `.sub-h`, none of them targets |
+| `/work/gatekeepnt`, `/atctm`, `/moodlens`, `/moodinsight` | 0 with a range |
+| `/work/sieve` | 8, only because it is the one case study with tables |
+
+`/papers` and `/teaching` did have reveals, 12 and 18 elements respectively.
+The complaint that the sub-pages had none was right about `/notes` and four of
+the five case studies and wrong about those two.
+
+Prose now reveals in two weights. Landmarks, the things you scan for, rise
+28px: headings, figures, tables, lists, quotes and code blocks. Body paragraphs
+rise 16px and finish earlier, at `cover 36%`, so a paragraph is settled well
+before it reaches the line being read.
+
+Paragraphs are included after **counting what is actually on the pages**: four
+of the five case studies contain no headings at all, only paragraphs and a
+single list, so a landmarks-only rule left them with one animated element each.
+This is coverage of the existing reveal, not a new technique.
+
+### The persisted sidebar
+
+`transition:persist` was doing its job and was not the cause. Measured after a
+client-side navigation: the `.profile` node is the same object, attributes and
+all, and `reveal-up` is nonetheless running again at 217ms having been finished
+at 1000ms before the navigation.
+
+Persist keeps a node. **A CSS animation is not part of a node's state.** The
+router detaches the persisted element and re-attaches it into the new document;
+an animation on an element that leaves the document is canceled, and
+re-insertion starts it from zero. No attribute prevents this, so the entry is
+switched off instead: `astro:after-swap` sets `data-navigated` on the document
+element, in the same task as the swap so it applies before the restarted
+animation can paint, and the sidebar's entry rules are disabled from then on.
+It is never cleared. Once you have navigated, the sidebar has introduced itself.
+
+Keep comments inside an `is:inline` script short. Astro ships them to every page
+byte for byte and never minifies them: a fourteen line explanation there cost
+**426 bytes gzipped on every route**, which is why this one lives in CSS, where
+Lightning CSS strips it.
 
 ### Scroll progress
 

@@ -169,6 +169,107 @@ for (const gap of [30, 300, 400, 400, 500, 600]) {
   console.log(`  ${String(s.t).padStart(5)}ms   --shimmer: ${s.v}`);
 }
 
+// WHERE REVEALS LAND.
+//
+// The number that decides whether a scroll reveal is noticed at all: how far
+// down the viewport the element is when its animation reaches progress 1. Too
+// close to the bottom edge and the motion is over before it enters attention.
+//
+// This is measured rather than reasoned about because the answer depends on
+// the range unit. `entry` percentages are a fraction of the element's own
+// height, so the landing position varies with element size: measured at 96
+// percent for a skill chip and 47 percent for a project row under the same
+// rule. `cover` percentages are a fraction of viewport plus element, whose
+// midpoint is the element centred, so the landing position holds steady
+// whatever the element's height.
+//
+// Target zone is 45 to 80 percent: below the centre line, comfortably above
+// the bottom edge.
+console.log('\nWHERE REVEALS LAND, element centre as a percentage of viewport height when the reveal completes');
+const LANDING = [
+  ['/', '.card-grid:not(.focus) > *'],
+  ['/work', '.rows > .row'],
+  ['/work/sieve', '.prose > h2'],
+  ['/work/gatekeepnt', '.prose > p'],
+  ['/work/moodlens', '.prose > p'],
+  ['/papers', '.card-grid > *'],
+  ['/teaching', '.card-grid > *'],
+  ['/notes', '.story > h2'],
+  ['/about', '.skills .item'],
+];
+
+let landingProblems = 0;
+for (const [route, sel] of LANDING) {
+  await page.goto(BASE + route, { waitUntil: 'load' });
+  await page.waitForTimeout(400);
+  const centres = await page.evaluate(async ({ sel }) => {
+    const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const els = [...document.querySelectorAll(sel)].slice(0, 3);
+    if (!els.length) return null;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const out = [];
+    for (const el of els) {
+      const a = el.getAnimations().find((x) => x.animationName && x.timeline !== document.timeline);
+      if (!a) { out.push(null); continue; }
+      let hit = null;
+      for (let y = 0; y <= max; y += 40) {
+        window.scrollTo(0, y);
+        await frame();
+        const prog = a.effect.getComputedTiming().progress;
+        if (prog !== null && prog >= 0.995) {
+          const r = el.getBoundingClientRect();
+          hit = Math.round(((r.top + r.height / 2) / innerHeight) * 100);
+          break;
+        }
+      }
+      out.push(hit);
+    }
+    window.scrollTo(0, 0);
+    return out;
+  }, { sel });
+
+  if (!centres) {
+    landingProblems += 1;
+    console.log(`  ${w(route, 20)}${w(sel, 28)} SELECTOR MATCHED NOTHING`);
+    continue;
+  }
+  const found = centres.filter((c) => c !== null);
+  const outside = found.filter((c) => c < 45 || c > 80);
+  if (!found.length || outside.length) landingProblems += 1;
+  console.log(
+    `  ${w(route, 20)}${w(sel, 28)}${found.length ? found.map((c) => `${c}%`).join(', ') : 'no scroll-driven animation'}${outside.length ? '   OUTSIDE 45-80' : ''}`
+  );
+}
+console.log(landingProblems === 0 ? '  all inside the target zone' : `  ${landingProblems} route(s) outside the target zone`);
+
+// The persisted sidebar must not replay its entry on navigation.
+// transition:persist keeps the node but not the progress of a CSS animation:
+// the swap detaches and re-attaches the element, which cancels and restarts
+// the animation. This checks both halves, that the node really is the same
+// object and that nothing is animating on it afterwards.
+console.log('\nPERSISTED SIDEBAR across client-side navigation');
+await page.goto(BASE + '/', { waitUntil: 'load' });
+await page.waitForTimeout(1800);
+await page.evaluate(() => { document.querySelector('.profile').dataset.probe = 'orig'; });
+for (const href of ['/papers', '/teaching', '/about']) {
+  await page.click(`a[href="${href}"]`);
+  await page.waitForTimeout(140);
+  const r = await page.evaluate(() => {
+    const el = document.querySelector('.profile');
+    const cs = getComputedStyle(el);
+    return {
+      same: el.dataset.probe === 'orig',
+      running: el.getAnimations().filter((a) => a.playState === 'running').map((a) => a.animationName),
+      opacity: cs.opacity,
+      transform: cs.transform,
+    };
+  });
+  const clean = r.same && r.running.length === 0 && r.opacity === '1' && r.transform === 'none';
+  console.log(
+    `  ${w(href, 12)}node persisted: ${r.same}   replaying: ${r.running.join(',') || 'nothing'}   opacity ${r.opacity}   ${clean ? 'OK' : 'PROBLEM'}`
+  );
+}
+
 // Nothing on the time clock may still be moving once the page has settled.
 // Scroll-driven animations are excluded because they report playState
 // "running" whether or not the scroller is moving: their time is scroll

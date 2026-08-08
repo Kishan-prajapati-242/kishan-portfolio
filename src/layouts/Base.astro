@@ -43,10 +43,12 @@ const { title, description, ogType, jsonLdPerson } = Astro.props;
       })();
     </script>
     <script is:inline>
-      // The router swaps <html> attributes, which drops the theme class. This
-      // reapplies it in the same frame as the swap, before paint, so there is
-      // no flash on navigation either.
+      // Reapplies the theme class the router drops, and flags the document as
+      // navigated. Both are explained in global.css; keep comments in an
+      // is:inline script short, because Astro ships them to every page byte
+      // for byte and they are never minified.
       document.addEventListener('astro:after-swap', function () {
+        document.documentElement.setAttribute('data-navigated', '');
         var stored = null;
         try {
           stored = localStorage.getItem('theme');

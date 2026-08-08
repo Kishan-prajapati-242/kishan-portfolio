@@ -154,18 +154,18 @@ async function styles(page, sel, props, pseudo) {
   console.log('\nKEN BURNS, the featured card only');
   await page.mouse.move(0, 0);
   await page.waitForTimeout(300);
-  const beamSel = '.project-card.beam .art img';
-  const plainSel = '.project-card:not(.beam) .art img';
+  const beamSel = '.project-card.is-flagship .art img';
+  const plainSel = '.project-card:not(.is-flagship) .art img';
   if (!(await page.$(beamSel))) {
     console.log('  SKIP  the featured card has no art file');
     await page.close();
   } else {
-  await hoverCentred(page, '.project-card.beam .title a');
+  await hoverCentred(page, '.project-card.is-flagship .title a');
   const beamAnim = await styles(page, beamSel, ['animation-name', 'animation-duration']);
   ok('featured card pans on hover', beamAnim['animation-name'] === 'ken-burns', `${beamAnim['animation-name']} ${beamAnim['animation-duration']}`);
   const plainExists = await page.$(plainSel);
   if (plainExists) {
-    await hoverCentred(page, '.project-card:not(.beam) .title a');
+    await hoverCentred(page, '.project-card:not(.is-flagship) .title a');
     const plainAnim = await styles(page, plainSel, ['animation-name']);
     ok('other cards do not pan', plainAnim['animation-name'] === 'none', plainAnim['animation-name']);
   } else {
@@ -341,8 +341,10 @@ async function styles(page, sel, props, pseudo) {
   ok('button beam is gone', rmBtn.display === 'none' || rmBtn['animation-name'] === 'none', `${rmBtn.display} ${rmBtn['animation-name']}`);
   const rmMarquee = await styles(page, '.marquee-track', ['animation-name', 'transform']);
   ok('marquee is static', rmMarquee['animation-name'] === 'none', rmMarquee['animation-name']);
-  const rmBeam = await styles(page, '.beam', ['animation-name'], '::after');
-  ok('border beam is off', rmBeam['animation-name'] === 'none', rmBeam['animation-name']);
+  // The border beam was removed rather than fixed twice over, so this asserts
+  // its absence: nothing may paint a ::after layer on the lead card.
+  const rmBeam = await styles(page, '.is-flagship', ['content'], '::after');
+  ok('the border beam is gone entirely', !rmBeam || rmBeam.content === 'none', rmBeam ? rmBeam.content : 'no lead card on this route');
   await page.close();
 }
 

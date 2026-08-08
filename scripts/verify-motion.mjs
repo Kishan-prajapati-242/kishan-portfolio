@@ -18,7 +18,9 @@ const routes = ['/', '/work', '/work/sieve', '/work/gatekeepnt', '/work/atctm',
 const KILL_SUPPORT = `
   *, *::before, *::after { animation-timeline: auto !important; }
   .reveal, [class*="reveal"], .line-in, .card-grid > *, .rows > .row,
-  .prose .data-table { opacity: 1 !important; transform: none !important; }
+  .prose .data-table, .data-table, .prose > *, .story > *, .skills .item,
+  .skills .specialist .chip, .project-card .art .screen
+  { opacity: 1 !important; transform: none !important; }
 `;
 
 const browser = await chromium.launch();
@@ -39,42 +41,69 @@ for (const [label, viewport] of [['1440', { width: 1440, height: 900 }], ['390',
     await page.evaluate(() => document.fonts?.ready);
 
     // Walk the page the way a reader would, checking at each stop.
+    //
+    // Two different failures, because they mean different things and only one
+    // of them used to be caught.
+    //
+    //   stuck  invisible once the page is scrolled as far as it goes. The
+    //          element can never be read at all. Always a bug.
+    //   late   invisible while its centre is in the top 80 percent of the
+    //          viewport, which is the reading zone. The reveal has not
+    //          finished by the time the element reaches where it is going to
+    //          be read.
+    //
+    // An element that is transparent while it is still poking in at the very
+    // bottom edge is neither: that is the reveal doing its job. The earlier
+    // version of this check flagged those too, which was a false positive that
+    // only stayed quiet because entry ranges are as long as the element and so
+    // completed almost immediately for small elements.
     const hidden = await page.evaluate(async () => {
       const bad = [];
       const seen = new Set();
-      const check = () => {
+      const isInvisible = (s) =>
+        parseFloat(s.opacity) < 0.05 ||
+        (s.clipPath !== 'none' && /inset\([^)]*100%/.test(s.clipPath));
+
+      const check = (readingZoneOnly) => {
         for (const el of document.querySelectorAll('main *, .profile *')) {
           const text = (el.textContent || '').trim();
           if (!text || el.children.length > 0) continue;
           const r = el.getBoundingClientRect();
           if (r.height === 0 || r.bottom < 0 || r.top > window.innerHeight) continue;
+          if (readingZoneOnly && r.top + r.height / 2 > window.innerHeight * 0.8) continue;
           const s = getComputedStyle(el);
-          const invisible =
-            parseFloat(s.opacity) < 0.05 ||
-            (s.clipPath !== 'none' && /inset\([^)]*100%/.test(s.clipPath));
           const key = text.slice(0, 40);
-          if (invisible && !seen.has(key)) {
+          if (isInvisible(s) && !seen.has(key)) {
             seen.add(key);
-            bad.push({ text: key, opacity: s.opacity, clip: s.clipPath });
+            bad.push({
+              text: key,
+              opacity: s.opacity,
+              clip: s.clipPath,
+              kind: readingZoneOnly ? 'late' : 'stuck',
+              centrePct: Math.round(((r.top + r.height / 2) / window.innerHeight) * 100),
+            });
           }
         }
       };
+
       const step = Math.round(window.innerHeight * 0.75);
       for (let y = 0; y <= document.body.scrollHeight; y += step) {
         window.scrollTo(0, y);
-        await new Promise((r) => setTimeout(r, 220));
-        check();
+        await new Promise((r) => setTimeout(r, 260));
+        check(true);
       }
       window.scrollTo(0, document.body.scrollHeight);
-      await new Promise((r) => setTimeout(r, 600));
-      check();
+      await new Promise((r) => setTimeout(r, 700));
+      check(false);
       return bad;
     });
 
     if (hidden.length) {
       problems += hidden.length;
-      console.log(`  ${mode}/${label} ${route}  ${hidden.length} STUCK INVISIBLE`);
-      hidden.slice(0, 3).forEach((h) => console.log(`      "${h.text}" opacity=${h.opacity}`));
+      console.log(`  ${mode}/${label} ${route}  ${hidden.length} INVISIBLE`);
+      hidden.slice(0, 4).forEach((h) =>
+        console.log(`      [${h.kind}] "${h.text}" opacity=${h.opacity} centre=${h.centrePct}%`)
+      );
     }
   }
   await context.close();

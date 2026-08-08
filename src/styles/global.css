@@ -730,6 +730,33 @@
   animation: wipe-up var(--dur-slow) var(--ease-out-expo) 120ms both;
 }
 
+/* The sidebar introduces itself once per session, not once per page.
+
+   transition:persist was doing its job and was not the problem. Measured on
+   the deployed site: after a client-side navigation the .profile node is
+   confirmed to be the same object, with its attributes and state intact, and
+   reveal-up is nonetheless running again at 217ms having been finished at
+   1000ms before the navigation.
+
+   The reason is that persist keeps a node, and a CSS animation is not part of
+   a node's state. The router detaches the persisted element and re-attaches it
+   into the new document, an animation on an element that leaves the document
+   is canceled, and re-insertion starts it again from zero. There is no
+   attribute that prevents this, so the entry has to be turned off instead.
+
+   data-navigated is set by the astro:after-swap listener in Base.astro rather
+   than by a component script, so it lands in the same task as the swap and
+   applies before the browser can paint the restarted animation. It is never
+   cleared: once you have navigated, the sidebar has already introduced itself
+   and does not need to do it again. */
+[data-navigated] .profile,
+[data-navigated] .profile .portrait {
+  animation: none;
+  opacity: 1;
+  transform: none;
+  clip-path: none;
+}
+
 .display .line-in {
   transform: translateY(110%);
   animation: line-up var(--dur-slow) var(--ease-out-expo) both;
@@ -786,23 +813,59 @@
 /* ---- Scroll reveals ----------------------------------------------------- */
 /* Everything in here is guarded. In the fallback the elements are simply
    visible and static: there is no state where an unsupported browser gets
-   invisible content, because the hidden state only exists inside the guard. */
+   invisible content, because the hidden state only exists inside the guard.
+
+   THE RANGE UNIT. Every range here is expressed in `cover`, never in `entry`.
+   This is the single change that made the reveals legible, and the reason is
+   geometric rather than a matter of taste.
+
+   `entry` runs from the element's leading edge touching the bottom of the
+   viewport to its trailing edge doing the same, so the length of an entry
+   range is the element's own height. A percentage through it therefore means a
+   completely different position on screen depending on how tall the element
+   is. Measured on the live site with `entry 10% entry 70%`: a skill chip, 3
+   percent of the viewport tall, finished its reveal with its centre at 96
+   percent of viewport height, which is to say off the bottom edge where nobody
+   is looking. A project row, 13 percent tall, finished at 47 percent, near the
+   middle. Same rule, same page, and the range from 47 to 96 is why the motion
+   read as inconsistent and mostly invisible.
+
+   `cover` runs from the leading edge touching the bottom of the viewport to
+   the trailing edge passing the top, a length of viewport plus element. Its
+   midpoint is the element centred in the viewport, whatever the element's
+   height. Completing at `cover 40%` puts the element's centre between 60 and
+   70 percent of viewport height across a thirty-fold range of element heights.
+   That is a consistent, watchable landing position.
+
+   The old rule was already right once, by accident: the last-screen override
+   used `cover 50%`, and those were the only reveals anybody could see.
+
+   TRAVEL. 40px on cards, up from 24px. DESIGN.md capped travel at 32px on the
+   grounds that long travel reads as cheap. That was correct for a time-based
+   entrance and wrong for a scroll-driven one, where the user controls the
+   speed and a short travel is simply not perceived as movement.
+
+   CHARACTER. Sections do not all move the same way, because uniform motion
+   normalises: the eye stops registering it as motion within two sections.
+   Cards rise, list rows come in from alternating sides, prose landmarks rise a
+   shorter distance, and the lead element of a section travels further than its
+   siblings. Four vocabularies, not one, and no more animations than before. */
 
 @supports (animation-timeline: view()) {
   .reveal {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(40px);
     animation: reveal-up linear both;
     animation-timeline: view();
-    animation-range: entry 10% entry 70%;
+    animation-range: cover 5% cover 40%;
   }
 
   .reveal-text {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(28px);
     animation: reveal-up linear both;
     animation-timeline: view();
-    animation-range: entry 10% entry 70%;
+    animation-range: cover 5% cover 40%;
   }
 
   /* Labels land before the heading they introduce. */
@@ -810,27 +873,28 @@
     opacity: 0;
     animation: reveal-fade linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 45%;
+    animation-range: cover 0% cover 28%;
   }
 
-  /* Technique 5, staggered cascade, on the skills groups. Each item gets its
-     own timeline so a group entering alone still animates. */
+  /* Staggered cascade on the skills groups. Each item gets its own timeline so
+     a group entering alone still animates. Short travel: there are forty of
+     them, and forty things moving 40px at once is a swarm. */
   .skills .item,
   .skills .specialist .chip {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(22px);
     animation: reveal-up linear both;
     animation-timeline: view();
   }
 
   .skills .item:nth-child(4n + 1),
-  .skills .specialist .chip:nth-child(4n + 1) { animation-range: entry 10% entry 70%; }
+  .skills .specialist .chip:nth-child(4n + 1) { animation-range: cover 5% cover 40%; }
   .skills .item:nth-child(4n + 2),
-  .skills .specialist .chip:nth-child(4n + 2) { animation-range: entry 16% entry 76%; }
+  .skills .specialist .chip:nth-child(4n + 2) { animation-range: cover 8% cover 43%; }
   .skills .item:nth-child(4n + 3),
-  .skills .specialist .chip:nth-child(4n + 3) { animation-range: entry 22% entry 82%; }
+  .skills .specialist .chip:nth-child(4n + 3) { animation-range: cover 11% cover 46%; }
   .skills .item:nth-child(4n + 4),
-  .skills .specialist .chip:nth-child(4n + 4) { animation-range: entry 28% entry 88%; }
+  .skills .specialist .chip:nth-child(4n + 4) { animation-range: cover 14% cover 49%; }
 
   /* Technique 3, blur to sharp. Images only: blurred text looks broken.
      This sits on the .screen wrapper rather than the img so that the img is
@@ -844,62 +908,81 @@
     transform: scale(1.04);
     animation: unblur linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 90%;
+    animation-range: cover 0% cover 42%;
   }
 
-  /* Technique 6, directional slide. Alternating sides, so the two list-shaped
-     sections read differently from the card grids. */
+  /* Directional slide. Alternating sides, so the list-shaped sections read
+     differently from the card grids. 40px, because a horizontal move has to
+     clear the eye's tolerance for text reflow to register as travel. */
   .rows.slide > .row:nth-child(odd) {
-    transform: translateX(-24px);
+    transform: translateX(-40px);
     animation-name: slide-in;
   }
 
   .rows.slide > .row:nth-child(even) {
-    transform: translateX(24px);
+    transform: translateX(40px);
     animation-name: slide-in;
   }
 
   /* Tables fade only. A table sliding while someone reads a number is
      irritating. */
-  .prose .data-table {
+  .prose .data-table,
+  .data-table {
     opacity: 0;
     animation: reveal-fade linear both;
     animation-timeline: view();
-    animation-range: entry 10% entry 70%;
+    animation-range: cover 5% cover 40%;
   }
 
-  /* Section headings mask-reveal per line on the scroll clock. */
+  /* Section headings mask-reveal per line on the scroll clock. These are the
+     loudest thing on the page and they run slightly ahead of the content they
+     introduce, so the heading is settled by the time the cards arrive. */
   .section-h .line-in {
     transform: translateY(110%);
     animation: line-up linear both;
     animation-timeline: view();
-    animation-range: entry 15% entry 85%;
+    animation-range: cover 2% cover 34%;
   }
 
   .section-h .line:nth-child(2) .line-in {
-    animation-range: entry 22% entry 92%;
+    animation-range: cover 6% cover 38%;
   }
 
   /* Grid children each get their own timeline, so a card entering alone still
      animates. Stagger is a range offset because a scroll timeline has no time
-     axis to delay along. Five steps, then the cycle resets. */
+     axis to delay along. */
   .card-grid > *,
   .rows > .row {
     opacity: 0;
-    transform: translateY(24px) scale(0.98);
+    transform: translateY(40px) scale(0.97);
     animation: reveal-up linear both;
     animation-timeline: view();
   }
 
-  /* Chains cap at four, per the revised stagger rule. */
+  /* Chains cap at four, then reset. The offsets are 3 percent of a cover range
+     rather than 6 percent of an entry range: a cover range is longer, so the
+     same visual stagger needs a smaller number, and keeping the spread tight
+     stops the fourth item finishing far below the first. */
   .card-grid > *:nth-child(4n + 1),
-  .rows > .row:nth-child(4n + 1) { animation-range: entry 10% entry 70%; }
+  .rows > .row:nth-child(4n + 1) { animation-range: cover 5% cover 40%; }
   .card-grid > *:nth-child(4n + 2),
-  .rows > .row:nth-child(4n + 2) { animation-range: entry 16% entry 76%; }
+  .rows > .row:nth-child(4n + 2) { animation-range: cover 8% cover 43%; }
   .card-grid > *:nth-child(4n + 3),
-  .rows > .row:nth-child(4n + 3) { animation-range: entry 22% entry 82%; }
+  .rows > .row:nth-child(4n + 3) { animation-range: cover 11% cover 46%; }
   .card-grid > *:nth-child(4n + 4),
-  .rows > .row:nth-child(4n + 4) { animation-range: entry 28% entry 88%; }
+  .rows > .row:nth-child(4n + 4) { animation-range: cover 14% cover 49%; }
+
+  /* The lead element of a section moves further than its siblings, so the eye
+     is given somewhere to land rather than a uniform field of equal movement.
+     One per section, and only where a section has more than one child. */
+  .card-grid > *:first-child:not(:only-child),
+  .rows > .row:first-child:not(:only-child) {
+    transform: translateY(64px) scale(0.95);
+  }
+
+  .rows.slide > .row:first-child:not(:only-child) {
+    transform: translateX(-64px);
+  }
 
   /* The hero grid is on the time clock, not the scroll clock. Restoring the
      timeline alone is not enough: .card-grid > * above re-declares the
@@ -920,9 +1003,51 @@
     animation-range: normal;
   }
 
+  /* Long-form pages. The case studies and the notes page are prose, and none
+     of the selectors above reach prose, so five of the twelve routes had no
+     scroll motion at all: four case studies and /notes. Audited across every
+     route rather than assumed.
+
+     Two weights, because the pages differ enormously. Landmarks, the things
+     you scan for, get the full 28px rise. Body paragraphs get a gentler 16px,
+     and finish earlier, at cover 36%, so a paragraph is settled well before it
+     reaches the line you are actually reading.
+
+     Paragraphs are included after counting what is on the pages rather than
+     reasoning about it: four of the five case studies contain no headings at
+     all, only paragraphs and a single list, so a landmarks-only rule left them
+     with one animated element each. This is coverage of the existing reveal,
+     not a new technique. */
+  .prose > :is(h2, h3, figure, blockquote, ul, ol, pre, .data-table),
+  .story > :is(h2, h3, figure, blockquote, ul, ol, table, .withdrawn-pair) {
+    opacity: 0;
+    transform: translateY(28px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: cover 5% cover 40%;
+  }
+
+  .prose > p,
+  .story > p {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: cover 4% cover 36%;
+  }
+
+  /* A section heading in long-form content is the lead element: it gets the
+     bigger move, the same way a first card does. */
+  .prose > h2,
+  .story > h2 {
+    transform: translateY(48px);
+  }
+
   /* Last screen. An element near the bottom of a short page can never complete
-     an entry range, because the page cannot scroll far enough. cover lets it
-     finish. */
+     a range that ends late, because the page cannot scroll far enough. Pulling
+     the end back to cover 32% lets it finish while still on screen. This used
+     to be the one rule expressed in cover, and it was the only one that landed
+     anywhere visible. */
   .section:last-of-type .reveal,
   .section:last-of-type .reveal-text,
   .section:last-of-type .card-grid > *,
@@ -931,7 +1056,7 @@
   .shell-main > :last-child .card-grid > *,
   .shell-main > :last-child .rows > .row,
   .shell-main > :last-child .section-h .line-in {
-    animation-range: entry 10% cover 50%;
+    animation-range: cover 2% cover 32%;
   }
 
   /* Scroll progress, one rule and no JavaScript. */
@@ -1104,7 +1229,10 @@ button:active {
   .skills .specialist .chip,
   .project-card .art .screen,
   .project-card .art img,
-  .prose .data-table {
+  .prose .data-table,
+  .data-table,
+  .prose > *,
+  .story > * {
     opacity: 1 !important;
     transform: none !important;
     clip-path: none !important;
@@ -1119,7 +1247,7 @@ button:active {
   .home-link,
   .counter-group,
   .marquee-track,
-  .beam .art img,
+  .is-flagship .art img,
   button::after {
     animation: none !important;
   }
@@ -1307,8 +1435,8 @@ button:active {
 
 /* Ken Burns, the Sieve card only, and only while hovered. Six seconds is slow
    enough to read as the image breathing rather than as a pan. */
-.beam:hover .art img,
-.beam:has(:focus-visible) .art img {
+.is-flagship:hover .art img,
+.is-flagship:has(:focus-visible) .art img {
   /* Linear, for the same reason as the button beam: a pan is a traversal, and
      an eased pan does most of its travel in the first second and then crawls,
      which is the opposite of what a slow pan is for. */
@@ -1348,49 +1476,29 @@ button:active {
   opacity: 1;
 }
 
-/* 5. Border beam, the Sieve card only. One instance, pointing at the thing
-   most worth reading. */
-.beam {
-  position: relative;
-}
+/* The border beam is gone. It was a conic gradient masked to a 1px ring around
+   the Sieve card, sweeping three times on load.
 
-.beam::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(
-    from var(--beam-angle, 0deg),
-    transparent 0%,
-    transparent 82%,
-    var(--color-plot) 92%,
-    transparent 100%
-  );
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  pointer-events: none;
-  /* Three passes, then it stops. It was infinite, which made it a heartbeat:
-     a thing that never stops moving stops meaning anything, and a permanent
-     animation next to a page about measurement discipline reads as decoration.
-     Three passes is long enough to be noticed and short enough to be over.
-     Linear because a rotating sweep at constant angular speed is what reads as
-     a sweep; easing it would make it lurch once per revolution. */
-  animation: beam 2.4s linear 3;
-}
+   It shipped broken: the mask composited as `add` rather than `exclude`, so
+   instead of a ring the raw gradient painted over the entire card, a large
+   dark wedge sweeping across the title, because --color-plot is a dark green.
+   Two separate causes, both worth knowing about. Lightning CSS silently drops
+   the composite keyword out of the `mask` shorthand, so it has to be a
+   longhand. And `-webkit-mask` is an alias of `mask` in Blink, so the prefixed
+   shorthand reset the composite back to `add` after the fact, while
+   `-webkit-mask-composite: xor` is not in the standard value set at all.
 
-@property --beam-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
+   Fixing the mask worked, and then the fixed version argued for its own
+   removal. Measured over a full revolution on a 338 by 628 card: 0.82 percent
+   of the card's pixels change, all of them on the 1px perimeter. Seven seconds
+   of animation that you notice only if you are looking at the card edge. The
+   job of pointing at the flagship project is already done by its position,
+   its measurement block and its live demo link. Set against that, it cost
+   three separate rendering traps and shipped a defect that damaged the page it
+   was meant to promote. The failure mode was far worse than the upside.
 
-@keyframes beam {
-  to {
-    --beam-angle: 360deg;
-  }
-}
+   .is-flagship survives as the hook for the Ken Burns pan, which is a hover effect
+   with a real payload rather than an ambient one. */
 
 @media (prefers-reduced-motion: reduce) {
   .illuminate .word {
@@ -1407,11 +1515,6 @@ button:active {
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;
-  }
-
-  .beam::after {
-    animation: none !important;
-    opacity: 0;
   }
 
   .project-card::before {

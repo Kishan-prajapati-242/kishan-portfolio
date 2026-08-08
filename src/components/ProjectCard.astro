@@ -57,7 +57,7 @@ const highlights: Record<
 
 const highlight = showMeasurement ? highlights[entry.id] : undefined;
 ---
-<Card class:list={['project-card', featured && 'project-card-featured', entry.id === 'sieve' && 'beam']}>
+<Card class:list={['project-card', featured && 'project-card-featured', entry.id === 'sieve' && 'is-flagship']}>
   <a class="art" href={`/work/${entry.id}`} tabindex="-1" aria-hidden="true">
     <span class="chrome">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -178,7 +178,7 @@ const highlight = showMeasurement ? highlights[entry.id] : undefined;
     height: auto;
   }
 
-  /* The hover gesture itself is in global.css. .beam is set on the Card
+  /* The hover gesture itself is in global.css. .is-flagship is set on the Card
      component's root element rather than on anything this file renders, so a
      scoped selector for it would be relying on class-prop scope propagation to
      reach an element another component owns. Global is where it belongs. */
