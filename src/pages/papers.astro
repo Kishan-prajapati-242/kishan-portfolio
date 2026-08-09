@@ -1,9 +1,15 @@
 ---
-// CONTENT.md section 6. Newest first. No citation counts: they go stale, they
-// differ between indexes, and a low true number invites a bad read.
+// CONTENT.md section 6. Newest first.
+//
+// Per-paper citation counts, no total and no h-index. A total of 7 sitting
+// beside a Scholar link that displays 6 is a contradiction a reader can check
+// in one click, and Scholar's own totals move. The counts live in
+// src/data/citations.ts, keyed by DOI, so a refresh is one edit there and one
+// in CONTENT.md.
 import Card from '../components/Card.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import Shell from '../layouts/Shell.astro';
+import { citationsFor, CITATIONS_READ, SCHOLAR_PROFILE } from '../data/citations';
 
 const papers = [
   {
@@ -86,6 +92,13 @@ const papers = [
         {p.body && <p class="t-small summary">{p.body}</p>}
         <p class="t-small"><a href={p.link.href}>{p.link.label}</a></p>
         {p.extra && <p class="t-small"><a href={p.extra.href}>{p.extra.label}</a></p>}
+        {citationsFor(p.link.href) !== undefined && (
+          <p class="citations t-small">
+            <span class="cite-count">{citationsFor(p.link.href)}</span>
+            <span class="cite-word">{citationsFor(p.link.href) === 1 ? 'citation' : 'citations'}</span>
+            <a class="cite-src t-label" href={SCHOLAR_PROFILE}>Google Scholar, {CITATIONS_READ}</a>
+          </p>
+        )}
       </Card>
     ))}
   </ol>
@@ -112,6 +125,36 @@ const papers = [
 </Shell>
 
 <style>
+  /* The count and its provenance are one line, the same shape the Measurement
+     component uses: a figure is not shown without the conditions it was read
+     under. */
+  .citations {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.6rem;
+    margin: 1rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-grid);
+  }
+
+  .cite-count {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cite-word {
+    color: var(--color-ink-2);
+  }
+
+  .cite-src {
+    color: var(--color-ink-3);
+    margin-left: auto;
+  }
+
   .section-body {
     margin-top: 2.5rem;
   }

@@ -183,13 +183,28 @@ const links = [
       form.dataset.state = 'sending';
       label.textContent = 'Sending';
       try {
-        const res = await fetch('https://api.web3forms.com/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(Object.fromEntries(new FormData(form))),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message || 'Send failed');
+        // FormData, not JSON. Content-Type: application/json is not a
+        // CORS-safelisted value, so it turns this into a preflighted request,
+        // and Web3Forms sits behind Cloudflare: when Cloudflare challenges or
+        // blocks a network, the OPTIONS response comes back 403 with no
+        // Access-Control-Allow-Origin at all, which the browser reports only
+        // as "TypeError: Failed to fetch". Multipart is safelisted, so this is
+        // a simple request with no preflight and one fewer thing to fail.
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), 15000);
+        let res: Response;
+        try {
+          res = await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: new FormData(form),
+            signal: controller.signal,
+          });
+        } finally {
+          window.clearTimeout(timer);
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(data.message || `HTTP ${res.status}`);
         form.reset();
         form.dataset.state = 'sent';
         status.className = 'form-status is-ok';
@@ -199,9 +214,17 @@ const links = [
         status.className = 'form-status is-bad';
         // The fallback matters more than the error. Someone who wants to reach
         // him should not be left holding a failure with nowhere to go.
+        // The fallback matters more than the error. A failed submission should
+        // still convert, so the address is a real mailto link, large enough to
+        // hit, with the copy button beside it, rather than a sentence someone
+        // has to retype from.
         const address = status.dataset.email ?? '';
         status.innerHTML =
-          `That did not send. Email <a href="mailto:${address}">${address}</a> instead, or try again in a moment.`;
+          `That did not send. Email <a class="fallback-mail" href="mailto:${address}">${address}</a>` +
+          ` instead, or <button type="button" class="t-label retry">try again</button>.`;
+        status.querySelector('.retry')?.addEventListener('click', () => {
+          form.requestSubmit();
+        });
       } finally {
         submit.disabled = false;
         label.textContent = restLabel;
@@ -385,6 +408,19 @@ const links = [
 
   .form-status.is-bad {
     color: var(--color-withdrawn);
+  }
+
+  /* The address in the failure message is the point of the failure message. */
+  .form-status :global(.fallback-mail) {
+    color: var(--color-plot);
+    font-family: var(--font-mono);
+    text-decoration-thickness: 2px;
+    overflow-wrap: anywhere;
+  }
+
+  .form-status :global(.retry) {
+    padding: 2px 8px;
+    color: var(--color-ink-2);
   }
 
   /* The spinner is the one thing here that has to keep moving to mean

@@ -5,6 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
 
+import externalLinks from './src/integrations/external-links.mjs';
+
 // https://astro.build/config
 export default defineConfig({
   // Every canonical, og:url, og:image and sitemap entry is derived from this.
@@ -22,5 +24,7 @@ export default defineConfig({
     },
   },
 
-  integrations: [sitemap(), mdx()]
+  // externalLinks runs last, over the emitted HTML, so it also covers links
+  // written in markdown, which never pass through an Astro component.
+  integrations: [sitemap(), mdx(), externalLinks()]
 });

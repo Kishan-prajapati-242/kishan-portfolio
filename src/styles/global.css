@@ -77,7 +77,10 @@
      is zero: that is measured, not guessed. The reference has no wide tracking
      anywhere, and the only non-zero tracking on it is negative. */
   --text-display: clamp(2.75rem, 11.5vw, 6.875rem);
-  --text-section: clamp(2.625rem, 6.25vw, 5.625rem);
+  /* cqi, not vw. Resolved where it is used, against .shell-main. 13cqi fits
+     APPOINTMENTS, the longest heading word on the site at 12 characters, in
+     the 280px column at 320px with room to spare. */
+  --text-section: clamp(1.5rem, 13cqi, 5.625rem);
   --text-stat: clamp(2.5rem, 4.9vw, 4.375rem);
   --text-row-title: 1.625rem;
 
@@ -452,6 +455,15 @@
     min-width: 0;
   }
 
+  /* Query container for the display headings. Same fix as the stat figure:
+     --text-section's clamp floor was 42px, which knows nothing about the 280px
+     column it has to fit inside at 320px, so APPOINTMENTS overflowed by 22px
+     and .line's clip-path, which is there for the mask reveal, cut it.
+     Sizing in cqi makes the heading track the column it is actually in. */
+  .shell-main {
+    container-type: inline-size;
+  }
+
   @media (min-width: 1024px) {
     .shell {
       padding-inline: 0;
@@ -538,34 +550,65 @@
 
   /* Stat block: large figure over a small uppercase label. Both carry -0.01em,
      which is the reference's actual tracking, negative rather than wide. */
+  /* Two columns, then four. Never three: there are four stats, and three
+     columns leaves one orphan alone on a second row. */
   .stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px 48px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
     margin: 3rem 0 0;
     padding: 0;
     list-style: none;
   }
 
-  @media (max-width: 1023px) {
+  @media (min-width: 900px) {
     .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      justify-content: center;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 20px;
     }
+  }
 
+  /* minmax(0, 1fr) already lets the track shrink, and it was already in place:
+     the tracks measured 106px each at 390px while the figure inside measured
+     165px. The track was never the problem. The figure was, because its size
+     came from a viewport clamp whose floor is 40px, and a 40px seven-character
+     mono string is 165px wide whatever the column does. It overflowed, and
+     .stat-value's clip-path, which exists for the wipe, cut the glyph in half.
+
+     min-width: 0 is here anyway. It costs nothing and it is the thing that
+     stops a future flex or grid child refusing to shrink. */
+  .stats > li {
+    min-width: 0;
+  }
+
+  @media (max-width: 899px) {
     .stat-label {
       max-width: none;
       font-size: 0.8125rem;
     }
   }
 
+  /* Sized against the card, not the viewport. A viewport clamp cannot know how
+     wide its own column is, which is the whole bug: at 390px it resolved to
+     its 40px floor regardless of the 106px column it had to fit inside.
+     container-type: inline-size on the cell makes cqi mean "one percent of
+     this card", so the figure tracks the card at every width and at every
+     column count.
+
+     20cqi was picked by measuring, not guessed. At 320px it leaves 16px of
+     spare width on 182,853, the longest figure, and it still reaches 40px at
+     768px where --text-stat caps it. The floor is 1rem only so that something
+     sane happens if cqi is ever unsupported; in practice cqi always governs.
+
+     One consequence worth stating: at 1440px the figure is 24px, where it used
+     to be 70px. Four columns in a 696px content column give a 159px card, and
+     a seven-character mono string simply cannot be 70px in a 159px card. That
+     is the cost of four-up rather than a regression in the sizing. */
   .stat-value {
     display: block;
     font-family: var(--font-mono);
     font-weight: 600;
-    font-size: var(--text-stat);
+    font-size: clamp(1rem, 20cqi, var(--text-stat));
     line-height: 1.2;
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
@@ -592,6 +635,13 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    /* The directional slide parks un-revealed even rows at translateX(40px),
+       which pushed the document 20px wider than the viewport on every narrow
+       width. Clipped, not hidden: overflow: clip does not create a scroll
+       container, so a view() timeline inside still resolves against the
+       document. overflow: hidden here would silently freeze every reveal in
+       the list at its start state, which is exactly the trap in D-079. */
+    overflow-x: clip;
   }
 
   .row {

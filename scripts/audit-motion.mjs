@@ -270,6 +270,77 @@ for (const href of ['/papers', '/teaching', '/about']) {
   );
 }
 
+// HORIZONTAL OVERFLOW.
+//
+// A long unbreakable string in a narrow column does not widen the column, it
+// escapes it, and whatever clips it does so silently. The stat figure was the
+// case that prompted this: 182,853 rendered 165px wide inside a 106px card at
+// 390px, and .stat-value's clip-path, which exists for the wipe, cut the glyph
+// in half.
+//
+// The reliable signal is documentElement.scrollWidth against the viewport.
+// Per-element boxes are not: getBoundingClientRect reports the layout box
+// whether or not an ancestor clips it, so a marquee inside overflow:hidden
+// looks like a 3,800px offender while contributing nothing. Offenders are
+// therefore only listed when nothing above them clips.
+console.log('\nHORIZONTAL OVERFLOW at narrow widths');
+{
+  const NARROW = [320, 375, 390];
+  const ROUTES = ['/', '/work', '/work/sieve', '/work/gatekeepnt', '/work/atctm',
+    '/work/moodlens', '/work/moodinsight', '/papers', '/teaching', '/notes',
+    '/about', '/contact', '/404'];
+  let overflowing = 0;
+  for (const vw of NARROW) {
+    const narrow = await browser.newPage({ viewport: { width: vw, height: 844 } });
+    for (const route of ROUTES) {
+      await narrow.goto(BASE + route, { waitUntil: 'load' });
+      await narrow.waitForTimeout(400);
+      const r = await narrow.evaluate((width) => {
+        const scrollWidth = document.documentElement.scrollWidth;
+        if (scrollWidth <= width + 1) return { scrollWidth, offenders: [] };
+        const clipped = (el) => {
+          for (let n = el.parentElement; n; n = n.parentElement) {
+            if (/hidden|clip|auto|scroll/.test(getComputedStyle(n).overflowX)) return true;
+          }
+          return false;
+        };
+        const offenders = [];
+        for (const el of document.querySelectorAll('body *')) {
+          const b = el.getBoundingClientRect();
+          if (b.width === 0 || b.right <= width + 1) continue;
+          if (getComputedStyle(el).position === 'fixed') continue;
+          if (clipped(el)) continue;
+          offenders.push({
+            sel: el.tagName.toLowerCase() +
+              (typeof el.className === 'string' && el.className
+                ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : ''),
+            right: Math.round(b.right),
+            text: (el.textContent || '').trim().slice(0, 30),
+          });
+        }
+        return { scrollWidth, offenders };
+      }, vw);
+      if (r.scrollWidth > vw + 1) {
+        overflowing += 1;
+        console.log(`  ${String(vw).padStart(4)}px ${w(route, 20)}scrollWidth ${r.scrollWidth}`);
+        const seen = new Set();
+        for (const o of r.offenders) {
+          if (seen.has(o.sel) || seen.size >= 4) continue;
+          seen.add(o.sel);
+          console.log(`         ${o.sel} right=${o.right} "${o.text}"`);
+        }
+        if (!r.offenders.length) {
+          console.log('         no unclipped offender, look at padding or a fixed-width child');
+        }
+      }
+    }
+    await narrow.close();
+  }
+  console.log(overflowing === 0
+    ? '  no route overflows at 320, 375 or 390'
+    : `  ${overflowing} route and width combinations overflow`);
+}
+
 // Nothing on the time clock may still be moving once the page has settled.
 // Scroll-driven animations are excluded because they report playState
 // "running" whether or not the scroller is moving: their time is scroll

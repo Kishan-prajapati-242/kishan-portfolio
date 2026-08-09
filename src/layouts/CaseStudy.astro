@@ -300,6 +300,9 @@ const meta = [
     color: var(--color-ink);
     padding: 0.1em 0.3em;
     border-radius: var(--radius-control);
+    /* Field paths and identifiers have no spaces to break at, so they escape
+       the column rather than wrapping. */
+    overflow-wrap: anywhere;
   }
 
   .prose :global(.measurement) {

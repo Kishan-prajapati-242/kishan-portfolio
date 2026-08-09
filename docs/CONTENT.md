@@ -480,8 +480,24 @@ Note: this is the only one of the three with a freely downloadable full text, so
 Fourth of four in 2024, third of six in 2024, second of five in 2025, first of four in 2026.
 ```
 
-### Citation counts
-Do **not** put citation counts on the site. They go stale, they differ between Google Scholar and other indexes (Scholar shows 7 total across all papers, while one aggregator lists the CML chapter at 1 against Scholar's 2), and a low true number invites a bad read. Link Google Scholar instead and let the visitor look.
+### Citation counts, the single source
+
+This reverses the earlier instruction not to show them. Per-paper counts only.
+
+Read from https://scholar.google.com/citations?user=AqL9YRcAAAAJ on 5 August 2026. To refresh, edit this table and `src/data/citations.ts`, which are the only two places counts exist.
+
+| paper | Scholar count |
+|---|---|
+| A Review of Transforming AI for Depression Detection | 2 |
+| Enhanced Depression Detection on Social Media | 2 |
+| Towards a Sustainable Future, Green Web 3.0 | 3 |
+| ACL Rolling Review submission | none, unpublished |
+
+Every count is labelled `Google Scholar, August 2026` and links to the profile.
+
+**Do not show a total, and do not show an h-index.** A total of 7 sitting next to a Scholar link that displays 6 is a contradiction a reader can check in one click, and Scholar's own totals move.
+
+**Green Web 3.0 is recorded as 3, and that is deliberate.** Scholar currently displays 2. It previously displayed 3, and this is a known Scholar indexing fluctuation that usually reverts. Kishan's call. Do not "correct" it to 2 without asking him.
 
 ### Collaborators to name
 Dr. Jayashri Patil, mentor at P P Savani University. Dhruvil Patel, peer co-author. On the ACL submission: Ning-Hsuan Tseng, Asteria Kaeberlein, Malihe Alikhani.
