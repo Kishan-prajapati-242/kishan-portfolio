@@ -66,6 +66,20 @@ const links = [
           <input type="hidden" name="access_key" value={accessKey} />
           <input type="hidden" name="subject" value="Portfolio contact form" />
           <input type="hidden" name="from_name" value="kishan-portfolio" />
+          {/* replyto is the whole fix. Web3Forms uses the field named `email`
+              as the Reply-To by default, so a submission from a gmail or an
+              outside .edu produced mail sent from web3forms.com carrying a
+              Reply-To on an unrelated external domain, which is the shape
+              inbound filters treat as spoofing. Pinning Reply-To to the
+              registered address reproduces, for every submission, the one
+              configuration already known to arrive: submitting as
+              prajapati.kish@northeastern.edu works today precisely because
+              Reply-To is then already @northeastern.edu.
+
+              The cost is that Reply in a mail client answers himself, so the
+              submitter's address is written into the message body below where
+              it can be read and copied. */}
+          <input type="hidden" name="replyto" value={EMAIL} />
           {/* Honeypot. Bots fill every field they find; people never see this
               one. Off-screen rather than display:none, because some bots skip
               hidden inputs. */}
@@ -190,6 +204,12 @@ const links = [
         // Access-Control-Allow-Origin at all, which the browser reports only
         // as "TypeError: Failed to fetch". Multipart is safelisted, so this is
         // a simple request with no preflight and one fewer thing to fail.
+        // The address goes in the body, because it is no longer in the
+        // headers. Web3Forms renders every submitted field as a labelled line,
+        // so a field name with spaces reads as a heading in the email.
+        const body = new FormData(form);
+        body.set('Reply to this person at', (document.getElementById('email') as HTMLInputElement).value);
+
         const controller = new AbortController();
         const timer = window.setTimeout(() => controller.abort(), 15000);
         let res: Response;
@@ -197,7 +217,7 @@ const links = [
           res = await fetch('https://api.web3forms.com/submit', {
             method: 'POST',
             headers: { Accept: 'application/json' },
-            body: new FormData(form),
+            body,
             signal: controller.signal,
           });
         } finally {
