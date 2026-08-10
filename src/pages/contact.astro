@@ -66,36 +66,26 @@ const links = [
           <input type="hidden" name="access_key" value={accessKey} />
           <input type="hidden" name="subject" value="Portfolio contact form" />
           <input type="hidden" name="from_name" value="kishan-portfolio" />
-          {/* No replyto override. Web3Forms uses the email field as the
-              Reply-To by default, which is what makes Reply in a mail client
-              answer the person who wrote in. It was briefly pinned to the
-              registered address to dodge a suspected mail filter; the real
-              bug was the honeypot below, so the default is back. See D-166. */}
-          {/* Honeypot, to the Web3Forms spec: a checkbox named botcheck.
-              It was a text input with id="company" and a label reading
-              "Company", which is precisely what browser autofill and password
-              managers target. Autofill wrote into it, Web3Forms saw a filled
-              honeypot, and real submissions were classified as spam.
+          {/* replyto is the whole fix. Web3Forms uses the field named `email`
+              as the Reply-To by default, so a submission from a gmail or an
+              outside .edu produced mail sent from web3forms.com carrying a
+              Reply-To on an unrelated external domain, which is the shape
+              inbound filters treat as spoofing. Pinning Reply-To to the
+              registered address reproduces, for every submission, the one
+              configuration already known to arrive: submitting as
+              prajapati.kish@northeastern.edu works today precisely because
+              Reply-To is then already @northeastern.edu.
 
-              A checkbox is the right shape for a second reason beyond not
-              being an autofill target: an unchecked checkbox contributes
-              nothing at all to FormData, so a human's submission carries no
-              botcheck key, while a bot that ticks everything sends
-              botcheck=on. A text input always submitted the key, empty or not.
-
-              Hidden by clipping rather than display:none, because some
-              password managers still fill display:none fields, and off-screen
-              via clip rather than left:-9999px, which the overflow sweep in
-              audit-motion.mjs would otherwise flag. */}
+              The cost is that Reply in a mail client answers himself, so the
+              submitter's address is written into the message body below where
+              it can be read and copied. */}
+          <input type="hidden" name="replyto" value={EMAIL} />
+          {/* Honeypot. Bots fill every field they find; people never see this
+              one. Off-screen rather than display:none, because some bots skip
+              hidden inputs. */}
           <div class="hp" aria-hidden="true">
-            <input
-              id="botcheck"
-              type="checkbox"
-              name="botcheck"
-              tabindex="-1"
-              autocomplete="off"
-              aria-hidden="true"
-            />
+            <label for="company">Company</label>
+            <input id="company" type="text" name="botcheck" tabindex="-1" autocomplete="off" />
           </div>
 
           <div class="field">
@@ -114,7 +104,7 @@ const links = [
 
           <div class="field">
             <label for="message" class="t-label">Message</label>
-            <textarea id="message" name="message" rows="6" required autocomplete="off"
+            <textarea id="message" name="message" rows="6" required
                       aria-describedby="message-error"></textarea>
             <p id="message-error" class="error t-small" data-for="message"></p>
           </div>
@@ -214,7 +204,12 @@ const links = [
         // Access-Control-Allow-Origin at all, which the browser reports only
         // as "TypeError: Failed to fetch". Multipart is safelisted, so this is
         // a simple request with no preflight and one fewer thing to fail.
+        // The address goes in the body, because it is no longer in the
+        // headers. Web3Forms renders every submitted field as a labelled line,
+        // so a field name with spaces reads as a heading in the email.
         const body = new FormData(form);
+        body.set('Reply to this person at', (document.getElementById('email') as HTMLInputElement).value);
+
         const controller = new AbortController();
         const timer = window.setTimeout(() => controller.abort(), 15000);
         let res: Response;
@@ -329,20 +324,14 @@ const links = [
     max-width: 44rem;
   }
 
-  /* Clipped, not display:none and not shifted off-screen. display:none is
-     still filled by some password managers, and a large negative offset shows
-     up in the horizontal overflow sweep. */
+  /* Off screen rather than display:none: some bots skip hidden inputs, and
+     the point is that they fill it in. */
   .hp {
     position: absolute;
+    left: -9999px;
     width: 1px;
     height: 1px;
-    padding: 0;
-    margin: -1px;
     overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
   }
 
   .field {
