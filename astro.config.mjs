@@ -10,7 +10,7 @@ import externalLinks from './src/integrations/external-links.mjs';
 // https://astro.build/config
 export default defineConfig({
   // Every canonical, og:url, og:image and sitemap entry is derived from this.
-  site: 'https://kishan-portfolio-three.vercel.app',
+  site: 'https://kishanprajapati.vercel.app',
 
   vite: {
     plugins: [tailwindcss()],
