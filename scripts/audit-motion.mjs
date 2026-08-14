@@ -355,11 +355,31 @@ const stillMoving = await page.evaluate(() =>
     .map((a) => {
       const t = a.effect.target;
       const id = t ? `${t.tagName.toLowerCase()}.${[...t.classList].join('.')}` : '?';
-      return `${a.animationName || '(unnamed)'} on ${id}`;
+      return { name: a.animationName || '(unnamed)', where: `${a.animationName || '(unnamed)'} on ${id}` };
     })
 );
+
+// The two marquee keyframes are the site's only intentional infinite loop, and
+// they are allowlisted by name rather than by muting infinite animations as a
+// class. A permanent entry in a report is a report nobody reads, and the point
+// of this section is that a genuinely new never-ending animation stands out on
+// the first run after it is added.
+//
+// DESIGN.md section 7 records why the marquee is allowed to loop: it is
+// decorative and aria-hidden, /about carries the real readable list, and it
+// pauses on hover and focus and is static under prefers-reduced-motion, which
+// is what WCAG 2.2.2 asks for.
+const EXPECTED_FOREVER = new Set(['marquee-left', 'marquee-right']);
+
+const unexpected = [...new Set(stillMoving.filter((s) => !EXPECTED_FOREVER.has(s.name)).map((s) => s.where))];
+const expected = [...new Set(stillMoving.filter((s) => EXPECTED_FOREVER.has(s.name)).map((s) => s.where))];
+
 console.log('\nSTILL ON THE TIME CLOCK 9s after load, with no scrolling');
-if (stillMoving.length === 0) console.log('  nothing');
-for (const s of new Set(stillMoving)) console.log(`  ${s}`);
+if (unexpected.length === 0) {
+  console.log('  nothing unexpected');
+} else {
+  for (const s of unexpected) console.log(`  ${s}`);
+}
+for (const s of expected) console.log(`  allowlisted, the skills marquee: ${s}`);
 
 await browser.close();
