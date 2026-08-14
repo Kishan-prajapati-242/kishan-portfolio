@@ -672,7 +672,7 @@ arXiv 301-redirects HTTP to HTTPS, and httpx does not follow cross-scheme redire
 ```
 I am a first-generation college student from Gujarat, India. I did my B.Tech in Information Technology and Engineering at P P Savani University in Surat, October 2021 to May 2025, finishing at 8.32 out of 10 with First Class with Distinction, and highest grades in Design and Analysis of Algorithms, Data Structures, Discrete Mathematics, Artificial Intelligence, Machine Learning, and Natural Language Processing.
 
-I started my MS in Computer Science at Northeastern's Khoury College in January 2026, currently at 3.7 out of 4.0, expecting to finish in May 2028. Coursework so far: CS 5010 Programming Design Paradigm, CS 6120 Natural Language Processing, and CS 5800 Algorithms.
+I started my MS in Computer Science at Northeastern's Khoury College in January 2026, currently at 3.78 out of 4.0, expecting to finish in May 2028. Coursework so far: CS 5010 Programming Design Paradigm, CS 6120 Natural Language Processing, and CS 5800 Algorithms.
 
 Before Northeastern I was a research assistant at P P Savani under Dr. Jayashri Patil from November 2023 to March 2025, and a MERN stack developer intern at Technonite in Surat from December 2024 to March 2025.
 
@@ -706,6 +706,23 @@ Outside coursework: photography and cinematic colour grading, mechanical keyboar
 ```
 
 Do not mention diet, calorie tracking, banking, housing, or family.
+
+### Education, the single source
+
+Used by the education timeline on the home page and by `/about`. Both cumulative GPAs are permitted by CLAUDE.md; nothing below them is.
+
+**Northeastern University, Khoury College of Computer Sciences, Boston**
+Master of Science, Computer Science. January 2026 to May 2028, expected.
+Cumulative GPA 3.78 out of 4.0, as of August 2026.
+Coursework so far: CS 5800 Algorithms, CS 5010 Programming Design Paradigm, CS 6120 Natural Language Processing.
+
+**P P Savani University, Surat, Gujarat**
+Bachelor of Technology, Information Technology and Engineering. October 2021 to May 2025.
+Cumulative 8.32 out of 10, First Class with Distinction.
+3.6 out of 4.0 is the equivalent on the US scale. State the 8.32 as the reported figure and the 3.6 as a conversion, in that order, and never present the 3.6 alone as though a US institution awarded it.
+Highest grades in Design and Analysis of Algorithms, Data Structures, Discrete Mathematics, Artificial Intelligence, Machine Learning, and Natural Language Processing.
+
+Only these two institutions appear. School-level education is deliberately excluded: it adds nothing for a co-op reader and pushes the work further down the page.
 
 ---
 

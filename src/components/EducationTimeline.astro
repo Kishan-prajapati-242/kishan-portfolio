@@ -1,0 +1,348 @@
+---
+// A vertical timeline: a rule that draws itself as you scroll, a node per
+// institution, and a card beside each node.
+//
+// The shape is borrowed from a reference portfolio, the detail is not. That
+// one uses a React timeline library, scraped university logos and cards that
+// arrive from alternating sides with no relationship to anything else on the
+// page. Here the rule reuses the draw-on-scroll device already in
+// Divider.astro, the cards are the same Card primitive as everywhere else and
+// inherit the whole hover gesture for free, and the nodes are monograms rather
+// than trademarked logos hotlinked from someone else's server.
+//
+// One rail on the left at every width. See the layout note further down for
+// why this does not alternate sides the way the reference does.
+import Card from './Card.astro';
+import { EDUCATION } from '../data/education';
+---
+<div class="edu">
+  <div class="edu-rail" aria-hidden="true"><span class="edu-rail-fill"></span></div>
+
+  <ol class="edu-list">
+    {EDUCATION.map((e) => (
+      <li class="edu-item">
+        <span class="edu-node" aria-hidden="true">
+          <span class="edu-mark t-label">{e.mark}</span>
+        </span>
+
+        <Card class="edu-card">
+          <p class="edu-meta t-label">
+            <span class="edu-dates">{e.from} to {e.to}</span>
+            {e.current && <span class="edu-now">Current</span>}
+          </p>
+
+          <h3 class="edu-institution">{e.institution}</h3>
+          {e.school && <p class="edu-school t-small">{e.school}</p>}
+          <p class="edu-place t-small">{e.place}</p>
+
+          <p class="edu-degree">
+            <span class="edu-degree-name">{e.degree}</span>
+            <span class="edu-field">{e.field}</span>
+          </p>
+
+          {/* The figure carries the scale it was awarded on, the same way every
+              other number on this site carries its conditions. */}
+          <p class="edu-grade">
+            <span class="edu-grade-value">{e.grade.value}</span>
+            <span class="edu-grade-scale t-small">{e.grade.scale}</span>
+            {e.grade.note && <span class="edu-grade-note t-label">{e.grade.note}</span>}
+          </p>
+
+          <p class="edu-body">{e.body}</p>
+
+          <p class="edu-courses-label t-label">{e.coursesLabel}</p>
+          <ul class="chips edu-courses">
+            {e.courses.map((c) => (
+              <li class="chip t-label">
+                {c.code && <span class="edu-code">{c.code}</span>}
+                {c.name}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style>
+  .edu {
+    position: relative;
+    margin-top: 2.5rem;
+  }
+
+  .edu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 3rem;
+  }
+
+  /* ---- The rail ---------------------------------------------------------
+     A 1px rule with a fill that grows as the section scrolls, which is the
+     same draw-on-scroll idea as the section divider rather than a new device.
+     Guarded: with no scroll-timeline support the fill is simply already full,
+     so the rail reads as a plain rule and nothing looks broken. */
+  .edu-rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 11px;
+    width: 1px;
+    background-color: var(--color-grid);
+  }
+
+  .edu-rail-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-plot);
+    transform-origin: 50% 0;
+  }
+
+  @supports (animation-timeline: view()) {
+    .edu-rail-fill {
+      transform: scaleY(0);
+      animation: edu-draw linear both;
+      animation-timeline: view();
+      animation-range: cover 12% cover 72%;
+    }
+
+    @keyframes edu-draw {
+      to { transform: scaleY(1); }
+    }
+  }
+
+  /* ---- Nodes ------------------------------------------------------------ */
+  .edu-item {
+    position: relative;
+    padding-left: 46px;
+  }
+
+  .edu-node {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 23px;
+    height: 23px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-grid);
+    border-radius: 50%;
+    background-color: var(--color-raised);
+    box-shadow: var(--shadow-raised);
+    transition: border-color var(--dur-fast) var(--ease-spring),
+      scale var(--dur-fast) var(--ease-spring);
+  }
+
+  .edu-mark {
+    font-size: 0.5rem;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-3);
+    transition: color var(--dur-fast) var(--ease-spring);
+  }
+
+  /* The node answers its own card, so the pair reads as one object. */
+  .edu-item:hover .edu-node,
+  .edu-item:has(:focus-visible) .edu-node {
+    border-color: var(--color-plot);
+    scale: 1.12;
+  }
+
+  .edu-item:hover .edu-mark,
+  .edu-item:has(:focus-visible) .edu-mark {
+    color: var(--color-plot);
+  }
+
+  /* ---- Card contents ---------------------------------------------------- */
+  /* Query container for the grade figure, so it sizes against the card rather
+     than the viewport. Same reason as the home page stat cells. */
+  .edu-item > :global(.edu-card) {
+    container-type: inline-size;
+  }
+
+  .edu-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin: 0 0 0.75rem;
+    color: var(--color-ink-3);
+  }
+
+  .edu-now {
+    padding: 3px 8px;
+    border: 1px solid var(--color-plot);
+    border-radius: 999px;
+    color: var(--color-plot);
+  }
+
+  .edu-institution {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-row-title);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .edu-school,
+  .edu-place {
+    margin: 0.25rem 0 0;
+    color: var(--color-ink-2);
+  }
+
+  .edu-place {
+    color: var(--color-ink-3);
+  }
+
+  .edu-degree {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin: 1.25rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-grid);
+  }
+
+  .edu-degree-name {
+    font-family: var(--font-mono);
+    color: var(--color-ink);
+  }
+
+  .edu-field {
+    color: var(--color-ink-2);
+    font-size: 1rem;
+  }
+
+  .edu-grade {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.6rem;
+    margin: 1.25rem 0 0;
+  }
+
+  .edu-grade-value {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    /* Sized against the card, like every other figure on the site, so it
+       cannot outgrow its column at 320px. */
+    font-size: clamp(1.5rem, 11cqi, 2.25rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .edu-grade-scale {
+    color: var(--color-ink-2);
+  }
+
+  .edu-grade-note {
+    color: var(--color-ink-3);
+    flex-basis: 100%;
+  }
+
+  .edu-body {
+    margin: 1.25rem 0 0;
+    color: var(--color-ink-2);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .edu-courses-label {
+    margin: 1.5rem 0 0.75rem;
+    color: var(--color-ink-3);
+  }
+
+  .edu-courses {
+    margin: 0;
+  }
+
+  .edu-code {
+    color: var(--color-ink-3);
+    margin-right: 0.4em;
+  }
+
+  /* One rail on the left at every width, and no alternating sides.
+
+     The reference this borrows from alternates cards either side of a centred
+     line, which works there because that page is full-bleed. Here the content
+     column is about 696px next to the 344px sidebar, so splitting it in two
+     gives a pair of 325px columns: the cards turn into narrow towers and the
+     line stops reading as a spine. One rail keeps the cards at full column
+     width and matches the left-aligned rhythm of every other section.
+
+     The gutter widens slightly at wide widths so the rail has room to breathe
+     rather than crowding the card edge. */
+  @media (min-width: 900px) {
+    .edu-item {
+      padding-left: 60px;
+    }
+
+    .edu-rail {
+      left: 13px;
+    }
+
+    .edu-node {
+      width: 27px;
+      height: 27px;
+      top: 2px;
+    }
+
+    .edu-mark {
+      font-size: 0.5625rem;
+    }
+  }
+
+  /* ---- Reveal ------------------------------------------------------------
+     The cards come in from the side they sit on, which is the directional
+     slide already used by the row lists, so the timeline moves in the site's
+     existing vocabulary rather than inventing a third one. */
+  @supports (animation-timeline: view()) {
+    .edu-item > :global(.edu-card) {
+      opacity: 0;
+      transform: translateY(28px);
+      animation: edu-in linear both;
+      animation-timeline: view();
+      animation-range: cover 6% cover 42%;
+    }
+
+    .edu-node {
+      opacity: 0;
+      animation: edu-fade linear both;
+      animation-timeline: view();
+      animation-range: cover 2% cover 32%;
+    }
+
+    @keyframes edu-in {
+      to { opacity: 1; transform: none; }
+    }
+
+    @keyframes edu-fade {
+      to { opacity: 1; }
+    }
+
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .edu-item > :global(.edu-card),
+    .edu-node {
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+    }
+
+    .edu-rail-fill {
+      transform: none !important;
+      animation: none !important;
+    }
+
+    .edu-item:hover .edu-node,
+    .edu-item:has(:focus-visible) .edu-node {
+      scale: none !important;
+    }
+  }
+</style>

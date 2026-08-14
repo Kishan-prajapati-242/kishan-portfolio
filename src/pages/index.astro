@@ -5,6 +5,7 @@ import { getCollection } from 'astro:content';
 import Card from '../components/Card.astro';
 import Counter from '../components/Counter.astro';
 import Divider from '../components/Divider.astro';
+import EducationTimeline from '../components/EducationTimeline.astro';
 import SkillsMarquee from '../components/SkillsMarquee.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import SectionHeading from '../components/SectionHeading.astro';
@@ -141,6 +142,17 @@ const papers = [
       ))}
     </ul>
     <p class="more t-label"><a href="/teaching">How I grade</a></p>
+  </section>
+
+  <Divider />
+
+  <section class="section" aria-labelledby="education-heading">
+    <SectionHeading id="education-heading" solid="Where I" ghost="Studied" />
+    <p class="section-lede section-body">
+      Two degrees, one in progress. Both figures are on the scale the awarding
+      institution used.
+    </p>
+    <EducationTimeline />
   </section>
 
   <Divider />
