@@ -2,50 +2,88 @@
 // Section divider, DESIGN.md section 4: an error-bar bracket, not a plain hr.
 // A 1px rule with 8px end caps at both ends.
 //
-// Drawn left to right on a scroll timeline via stroke-dasharray. This reuses a
-// device already in the design rather than introducing a new one. Decorative,
-// so it is hidden from assistive tech.
+// The rule draws left to right on a scroll timeline, and the far cap arrives
+// as it lands, so the bracket reads as a measurement being taken rather than a
+// line being decorated. Decorative, so it is hidden from assistive tech.
+//
+// This was an inline SVG until it turned out not to be drawing at all. The
+// path was `M0.5 0.5 V8.5 M0.5 4.5 H100% M-0.5 0.5 V8.5`, and percentages are
+// not valid in SVG path data: the parser rejects the `d` from `H100%` onward,
+// so only the near cap ever rendered and every divider on the site was a
+// lone 8px tick. Percentages are valid in the geometry attributes of <line>
+// and friends, which is the trap, but never inside `d`.
+//
+// Three boxes and a scaleX do the same job with no parser to appease, and the
+// draw is now the same device as the scroll progress bar and the education
+// rail rather than a third technique.
 ---
 <div class="divider" aria-hidden="true">
-  <svg width="100%" height="9" preserveAspectRatio="none" shape-rendering="crispEdges">
-    <path class="divider-path" d="M0.5 0.5 V8.5 M0.5 4.5 H100% M-0.5 0.5 V8.5" pathLength="1" fill="none" />
-  </svg>
+  <span class="divider-cap"></span>
+  <span class="divider-rule"></span>
+  <span class="divider-cap divider-cap-end"></span>
 </div>
 
 <style>
   .divider {
+    position: relative;
+    height: 9px;
     margin-block: 4rem;
   }
 
-  .divider svg {
-    display: block;
-    overflow: visible;
+  .divider-cap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 9px;
+    background-color: var(--color-grid);
   }
 
-  .divider-path {
-    stroke: var(--color-grid);
-    stroke-width: 1;
+  .divider-cap-end {
+    left: auto;
+    right: 0;
+  }
+
+  .divider-rule {
+    position: absolute;
+    top: 4px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--color-grid);
+    transform-origin: 0 50%;
   }
 
   @supports (animation-timeline: view()) {
-    .divider-path {
-      stroke-dasharray: 1;
-      stroke-dashoffset: 1;
-      animation: draw-divider linear both;
+    .divider-rule {
+      transform: scaleX(0);
+      animation: divider-draw linear both;
       animation-timeline: view();
-      animation-range: entry 10% entry 70%;
+      animation-range: cover 10% cover 45%;
     }
 
-    @keyframes draw-divider {
-      to {
-        stroke-dashoffset: 0;
-      }
+    /* The far cap lands as the rule reaches it. */
+    .divider-cap-end {
+      opacity: 0;
+      animation: divider-cap-in linear both;
+      animation-timeline: view();
+      animation-range: cover 38% cover 48%;
+    }
+
+    @keyframes divider-draw {
+      to { transform: scaleX(1); }
+    }
+
+    @keyframes divider-cap-in {
+      to { opacity: 1; }
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .divider-path {
-      stroke-dashoffset: 0 !important;
+    .divider-rule,
+    .divider-cap-end {
+      transform: none !important;
+      opacity: 1 !important;
       animation: none !important;
     }
   }

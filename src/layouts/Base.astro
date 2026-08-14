@@ -72,9 +72,12 @@ const { title, description, ogType, jsonLdPerson } = Astro.props;
     </main>
     <Footer />
     {/* Vercel Web Analytics. Page views and referrers only: cookieless, no
-        cross-site identifier, and nothing that needs a consent banner. It is
-        inert anywhere other than a Vercel deployment, so local builds and the
-        verification scripts are unaffected.
+        cross-site identifier, and nothing that needs a consent banner.
+
+        Off a Vercel deployment the script it fetches, /_vercel/insights/script.js,
+        simply 404s, because that path is served by the platform edge rather
+        than by the build. Local runs and the verification scripts see a failed
+        request and nothing else.
 
         Placed after the footer rather than in <head> so it never sits in the
         critical path, and outside <main> so it stays out of the element sweeps
