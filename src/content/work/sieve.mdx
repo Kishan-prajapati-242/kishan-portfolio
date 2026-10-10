@@ -5,14 +5,16 @@ order: 1
 timeline: July 2026 to present, with roughly 8 working days of active development in July
 team: solo
 status: live
+repoPrivate: true
 demo: https://getsieve.vercel.app
-demoNote: The live demo runs on 47,617 papers. The full 182,853 runs locally.
+demoNote: Runs on free hosting, so the first search after it has been idle can take a minute. The live demo runs on 47,617 papers. The full 182,853 runs locally.
 hardware: M1 MacBook Air, 8 GB RAM, fanless, no GPU
 cardArtAlt: >-
-  Sieve's search page with the query clinical text simplification in hybrid
-  mode, showing 20 of 211 fused candidates. Each result lists its title,
-  authors, venue and year, with its keyword rank and semantic rank.
-summary: A search engine for research papers, built because I once screened over 200 by hand and never wanted to do it again. It holds 182,853 papers, finds them by meaning as well as by keyword, answers in about 10 milliseconds, and cost nothing to run.
+  Sieve's landing page, headed Two rankers disagree. Sieve settles it. It says
+  keyword and vector search both run against 47,617 papers and their rankings
+  are fused, with buttons to try the search or create an account, beside a
+  stack of seven ranked results.
+summary: A search engine for research papers, built because I once screened over 200 by hand and never wanted to do it again. It holds 182,853 papers, finds them by meaning as well as by keyword, answers in about 10 milliseconds per search on my laptop, and cost nothing to run.
 stack:
   - Python 3.12
   - FastAPI
@@ -93,7 +95,7 @@ export const recoveries = [
 
 I hand-screened over 200 papers for a literature review once. It took weeks, and partway through I realised I was doing a job a computer should be doing. Sieve is that computer.
 
-It holds 182,853 research papers. You can search it by keyword, which is what you want when you know the exact name of a dataset, or by meaning, which is what you want when you can only describe the idea. It does both at once and comes back in about 10 milliseconds. It runs on a MacBook Air with 8 GB of memory and no fan, and it cost nothing to build.
+It holds 182,853 research papers. You can search it by keyword, which is what you want when you know the exact name of a dataset, or by meaning, which is what you want when you can only describe the idea. It does both at once and comes back in about 10 milliseconds per search on my laptop. It runs on a MacBook Air with 8 GB of memory and no fan, and it cost nothing to build.
 
 The first real search I ran returned the same paper three times in the top 20. Fixing that turned into a third of the project.
 

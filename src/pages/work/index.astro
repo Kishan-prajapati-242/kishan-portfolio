@@ -6,12 +6,13 @@ import ProjectCard from '../../components/ProjectCard.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import Shell from '../../layouts/Shell.astro';
 
-// Card art is found by filename: src/assets/work/<entry id>.png.
+// Card art is found by filename: src/assets/work/<entry id> with any image extension.
 const art = import.meta.glob<{ default: ImageMetadata }>(
   '../../assets/work/*.{png,jpg,jpeg,webp}',
   { eager: true }
 );
-const artFor = (id: string) => art[`../../assets/work/${id}.png`]?.default;
+const artFor = (id: string) =>
+  Object.entries(art).find(([file]) => file.slice('../../assets/work/'.length).replace(/\.[^.]+$/, '') === id)?.[1].default;
 
 const entries = (await getCollection('work', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order
@@ -31,9 +32,9 @@ const frontEnd = [
   <SectionHeading as="h1" solid="Selected" ghost="Work" />
   <p class="display-lede">
     Five things I have built: a search engine over 182,853 research papers, a
-    paper under review, two models that read text for emotion and intent, and a
-    calendar app in Java. Each one says what it actually does before it says
-    how.
+    first-author paper in preparation, two models that read text for emotion
+    and intent, and a calendar app in Java. Each one says what it actually does
+    before it says how.
   </p>
 
   <div class="card-grid card-grid-2 section-body">

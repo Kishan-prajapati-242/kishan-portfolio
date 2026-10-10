@@ -14,7 +14,7 @@ const work = defineCollection({
         // Optional so an entry with no recorded date shows no row rather than an invented one.
         timeline: z.string().optional(),
         team: z.string().optional(),
-        status: z.enum(['shipped', 'live', 'under review', 'ongoing', 'archived']),
+        status: z.enum(['shipped', 'live', 'in preparation', 'ongoing', 'archived']),
         repo: z.url().optional(),
         repoPrivate: z.boolean().default(false),
         demo: z.url().optional(),
@@ -23,7 +23,7 @@ const work = defineCollection({
         cardArt: image().optional(),
         cardArtAlt: z.string().optional(),
         hardware: z.string().optional(),
-        summary: z.string().max(260),
+        summary: z.string().max(280),
         draft: z.boolean().default(false),
       })
       .refine((d) => !d.cardArt || !!d.cardArtAlt, {

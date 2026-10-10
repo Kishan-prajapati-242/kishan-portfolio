@@ -16,7 +16,8 @@ const art = import.meta.glob<{ default: ImageMetadata }>(
   '../assets/work/*.{png,jpg,jpeg,webp}',
   { eager: true }
 );
-const artFor = (id: string) => art[`../assets/work/${id}.png`]?.default;
+const artFor = (id: string) =>
+  Object.entries(art).find(([file]) => file.slice('../assets/work/'.length).replace(/\.[^.]+$/, '') === id)?.[1].default;
 
 const entries = (await getCollection('work', ({ data }) => !data.draft)).sort(
   (a, b) => a.data.order - b.data.order
@@ -28,11 +29,11 @@ const stats = [
   { value: 182853, spoken: '182,853 papers indexed', suffix: '', label: 'papers indexed', delay: 520 },
   { value: 500, spoken: '500 plus students taught', suffix: '+', label: 'students taught', delay: 630 },
   { value: 400, spoken: '400 plus LeetCode problems solved', suffix: '+', label: 'LeetCode solved', delay: 740 },
-  { value: 4, spoken: '4 papers, three published', suffix: '', label: 'papers written', delay: 850 },
+  { value: 4, spoken: '4 papers, three published and one first-author paper in preparation', suffix: '', label: 'papers written', delay: 850 },
 ];
 
 const ledeWords =
-  'I build retrieval and NLP systems, and I measure what they actually do. Right now that means search over 182,853 papers, a paper under review, and five hundred students who need their homework back.'.split(' ');
+  'I build retrieval and NLP systems, and I measure what they actually do. Right now that means search over 182,853 papers, a first-author paper in preparation, and five hundred students who need their homework back.'.split(' ');
 
 const teaching = [
   { course: 'CS 3000 Algorithms and Data', term: 'Summer A 2026' },
@@ -41,7 +42,7 @@ const teaching = [
 ];
 
 const papers = [
-  { title: 'First-author paper under review', venue: 'ACL Rolling Review', year: '2026', href: '/work/gatekeepnt' },
+  { title: 'First-author paper in preparation', venue: '', year: '2026', href: '/work/gatekeepnt' },
   { title: 'A Review of Transforming AI for Depression Detection', venue: 'CML 2025, Springer LNNS', year: '2026', href: 'https://doi.org/10.1007/978-981-95-2872-1_7' },
   { title: 'Enhanced Depression Detection on Social Media', venue: 'ICICC 2024, Springer LNNS', year: '2025', href: 'https://doi.org/10.1007/978-981-96-1264-2_23' },
   { title: 'Towards a Sustainable Future', venue: 'ITM Web of Conferences', year: '2024', href: 'https://doi.org/10.1051/itmconf/20246503015' },
@@ -80,14 +81,15 @@ const papers = [
       <h2 class="focus-title">Search and retrieval</h2>
       <p class="focus-body">
         Making search find what you meant, not just what you typed. I built one
-        over 182,853 research papers that answers in about 10 milliseconds.
+        over 182,853 research papers that answers in about 10 milliseconds per
+        search on my laptop.
       </p>
     </Card>
     <Card>
       <h2 class="focus-title">NLP research</h2>
       <p class="focus-body">
         Training language models, and more often checking whether the scores
-        they earn actually mean anything. One first-author paper under review.
+        they earn actually mean anything. One first-author paper in preparation.
       </p>
     </Card>
     <Card>
@@ -157,7 +159,7 @@ const papers = [
         <li class="row">
           <h3 class="row-title"><a href={p.href}>{p.title}</a></h3>
           <p class="row-meta">{p.year}</p>
-          <p class="row-sub">{p.venue}</p>
+          {p.venue && <p class="row-sub">{p.venue}</p>}
         </li>
       ))}
     </ul>

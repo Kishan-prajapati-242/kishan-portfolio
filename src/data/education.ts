@@ -28,7 +28,7 @@ export const EDUCATION: Education[] = [
     span: '2026 to 2028',
     grade: { value: '3.78', scale: 'out of 4.0', note: 'cumulative, August 2026' },
     body:
-      'I took the theory and systems courses first rather than the applied ones, because the failure modes I care about live there. The natural language processing course is where the paper now under review at ACL Rolling Review started, as a term project that turned into a first-author submission. The GPA is carried alongside teaching three courses and building the retrieval system in the work section.',
+      'I took the theory and systems courses first rather than the applied ones, because the failure modes I care about live there. The natural language processing course is where my first-author paper in preparation started, as a term project. The GPA is carried alongside teaching three courses and building the retrieval system in the work section.',
     coursesLabel: 'Coursework so far',
     courses: [
       { code: 'CS 5800', name: 'Algorithms' },
