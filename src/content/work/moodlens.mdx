@@ -1,0 +1,50 @@
+---
+title: MoodLens
+subtitle: Six attributes from one piece of text, in real time
+order: 3
+timeline: Research from December 2024 to August 2025. The demo has run since July 2025.
+team: independent research
+status: live
+repo: https://github.com/Kishan-prajapati-242/MoodLens
+demo: https://huggingface.co/spaces/kishansp242/MoodLens
+cardArtAlt: >-
+  The MoodLens demo after reading the sentence "My manager just told me I'm
+  being promoted to team lead next month." It returns got promoted, anxiety,
+  employment, future and sincere, with scores for sentiment and clarity.
+summary: "Type in a sentence and get six things back at once: the emotion, the event behind it, whether it is sarcastic, and more."
+stack:
+  - Python
+  - PyTorch
+  - DeBERTa-v3
+  - Gradio
+  - Hugging Face Spaces
+---
+
+import Caveat from '../../components/Caveat.astro';
+
+## What it does
+
+Paste in a sentence and it tells you six things about it at once: what happened, how the person feels about it, whether they mean it sincerely, whether it is past or future, and how sure they sound. It also names the broad area of life the event belongs to. It runs on Hugging Face Spaces, so there is nothing to install.
+
+Underneath is one DeBERTa-v3 model with a shared layer and a separate output for each label, served by a Gradio app. The model in the demo knows 70 kinds of event, across employment, health and relationships. The app code and the trained weights live in the Space itself. MIT licensed.
+
+## Where it came from
+
+MoodLens is the working part of ATCTM, the Adaptive Temporal-Contextual Transformer Model, a research project I started in December 2024.
+
+The idea behind ATCTM is that the same sentence means something different depending on what has happened to the person saying it. "I'm fine" reads one way before a redundancy and another way after. The plan was a model that goes back and re-reads earlier statements once it learns about a later event.
+
+What exists is the classifier at the front of that plan. The notebooks in the repository, committed between July and August 2025, start with a BERT multi-task model and end with DeBERTa-v3, a shared layer and a head for each label. That last one is the model MoodLens serves. The dataset is custom: over 490 life event types with Gen-Z context and over 49,000 annotated rows, labelled for sentiment, emotion, certainty, sarcasm, and temporal features. I also built a synthetic dataset generator for it that emits strict JSON, 100 entries per event type, over a 17-emotion taxonomy.
+
+The re-reading itself was meant to come from two components, a three-tier Temporal Event Memory and a Subjective Impact Estimator. Neither is in the repository.
+
+**Status:** the research model is paused. Its repository has had no commits since August 2025. MoodLens is the part that still runs.
+
+<Caveat>
+  ATCTM is proposed as a forward-looking direction inside the CML 2025 review
+  chapter, where I am second author. It is not itself a separately published
+  paper. The GitHub repository description currently says "Accepted at CML
+  2025", which conflates the two, and I am fixing it.
+</Caveat>
+
+The research code is at [github.com/Kishan-prajapati-242/ATCTM](https://github.com/Kishan-prajapati-242/ATCTM).

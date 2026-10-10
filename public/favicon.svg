@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Recall curve as a bar sparkline">
+  <!--
+    SPEC.md section 7. Four vertical bars of heights 18, 24, 27 and 28,
+    3px wide and 4px apart, bottom-aligned on a shared baseline at y=30.
+    That is the recall curve as a bar sparkline: rising, and flattening.
+    Hand-authored, because an image model cannot hold crisp geometry at 32px.
+  -->
+  <style>
+    .bar { fill: #1B4D42; }
+    @media (prefers-color-scheme: dark) {
+      .bar { fill: #5FBFA6; }
+    }
+  </style>
+  <rect class="bar" x="4" y="12" width="3" height="18" />
+  <rect class="bar" x="11" y="6" width="3" height="24" />
+  <rect class="bar" x="18" y="3" width="3" height="27" />
+  <rect class="bar" x="25" y="2" width="3" height="28" />
+</svg>

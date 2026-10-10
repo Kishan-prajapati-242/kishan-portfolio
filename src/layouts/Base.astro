@@ -1,0 +1,125 @@
+---
+import { ClientRouter } from 'astro:transitions';
+
+import '../styles/global.css';
+import '@fontsource-variable/ibm-plex-sans';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-mono/600.css';
+
+import Analytics from '@vercel/analytics/astro';
+import Footer from '../components/Footer.astro';
+import Nav from '../components/Nav.astro';
+import SEO from '../components/SEO.astro';
+
+interface Props {
+  title?: string;
+  description: string;
+  ogType?: 'profile' | 'article' | 'website';
+  jsonLdPerson?: boolean;
+}
+
+const { title, description, ogType, jsonLdPerson } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    {/* Sets the theme before first paint, so there is no flash. Inline scripts ship to every page
+        unminified, so keep comments out of them. */}
+    <script is:inline>
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch (e) {}
+        var dark = stored
+          ? stored === 'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
+    {/* The router drops the theme class on navigation. This puts it back and sets data-navigated. */}
+    <script is:inline>
+      document.addEventListener('astro:after-swap', function () {
+        document.documentElement.setAttribute('data-navigated', '');
+        var stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch (e) {}
+        var dark = stored
+          ? stored === 'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+      });
+    </script>
+    <SEO title={title} description={description} ogType={ogType} jsonLdPerson={jsonLdPerson} />
+    <ClientRouter fallback="animate" />
+  </head>
+  <body>
+    <div class="scroll-progress" aria-hidden="true"></div>
+    <a href="#main" class="skip-link t-label">Skip to content</a>
+    <Nav />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    {/* Off Vercel, /_vercel/insights/script.js 404s. That is expected. */}
+    <Analytics />
+    <script>
+      // One delegated listener for every spotlight surface, writing at most once per frame.
+      const SURFACES =
+        '.card, .stat-cell, .data-table.is-card, .rows > .row, .skills .item';
+
+      document.addEventListener('astro:page-load', () => {
+        const main = document.getElementById('main');
+        if (!main || main.dataset.spot === 'on') return;
+        main.dataset.spot = 'on';
+
+        let frame = 0;
+        let pending: { el: HTMLElement; x: number; y: number } | null = null;
+
+        main.addEventListener(
+          'pointermove',
+          (e) => {
+            const el = (e.target as Element | null)?.closest<HTMLElement>(SURFACES);
+            if (!el) return;
+            pending = { el, x: e.clientX, y: e.clientY };
+            if (frame) return;
+            frame = requestAnimationFrame(() => {
+              frame = 0;
+              if (!pending) return;
+              const { el: target, x, y } = pending;
+              const r = target.getBoundingClientRect();
+              target.style.setProperty('--mx', `${x - r.left}px`);
+              target.style.setProperty('--my', `${y - r.top}px`);
+            });
+          },
+          { passive: true }
+        );
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 240ms;
+    animation-timing-function: var(--ease-out-quart);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none !important;
+    }
+  }
+</style>

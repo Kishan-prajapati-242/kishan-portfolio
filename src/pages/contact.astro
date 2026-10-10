@@ -1,0 +1,422 @@
+---
+import Card from '../components/Card.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Shell from '../layouts/Shell.astro';
+import { AVAILABILITY_FULL } from '../data/availability';
+
+// A Vercel build without the key fails on purpose. A local build leaves the form out.
+const accessKey = (import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '').trim();
+if (!accessKey && process.env.VERCEL) {
+  throw new Error(
+    'PUBLIC_WEB3FORMS_KEY is not set for this Vercel build, so /contact would ship without its form. ' +
+      'Add it in the Vercel project under Settings, Environment Variables, for Production and Preview, then redeploy.'
+  );
+}
+const hasForm = accessKey.length > 0;
+
+const EMAIL = 'prajapati.kish@northeastern.edu';
+const links = [
+  { label: 'GitHub', href: 'https://github.com/Kishan-prajapati-242' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/kishan-prajapati-617a00202' },
+  { label: 'Google Scholar', href: 'https://scholar.google.com/citations?user=AqL9YRcAAAAJ' },
+  { label: 'LeetCode', href: 'https://leetcode.com/u/KishanSP242' },
+];
+---
+<Shell
+  title="Contact"
+  description="Open to software engineering internships and co-ops from January 2027. Email prajapati.kish@northeastern.edu."
+>
+  <SectionHeading as="h1" solid="Get In" ghost="Touch" />
+
+  <p class="availability">{AVAILABILITY_FULL}</p>
+
+  <div class="card-grid card-grid-2 section-body">
+    <Card class="contact-card">
+      <h2 class="card-heading t-label">Email</h2>
+      <p class="email">
+        <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+      </p>
+      <p class="copy-row">
+        <button id="copy-email" type="button" class="t-label" data-email={EMAIL}>
+          <span class="copy-label">Copy address</span>
+        </button>
+        <span id="copy-status" class="t-small copy-status" role="status" aria-live="polite"></span>
+      </p>
+    </Card>
+
+    <Card class="contact-card">
+      <h2 class="card-heading t-label">Elsewhere</h2>
+      <ul class="links">
+        {links.map((l) => (
+          <li><a href={l.href}>{l.label}</a></li>
+        ))}
+      </ul>
+      <p class="resume-line t-small">
+        <a href="/kishan-prajapati-resume.pdf">Resume (PDF)</a>
+      </p>
+    </Card>
+  </div>
+
+  {hasForm && (
+    <section class="section" aria-labelledby="form-heading">
+      <SectionHeading id="form-heading" solid="Or Send" ghost="A Message" />
+      <div class="section-body">
+        <form id="contact-form" class="form" novalidate>
+          <input type="hidden" name="access_key" value={accessKey} />
+          <input type="hidden" name="from_name" value="kishan-portfolio" />
+          {/* Reply-To is pinned to the registered address, the setup known to arrive.
+              The sender's address goes into the message body instead. */}
+          <input type="hidden" name="replyto" value={EMAIL} />
+          {/* Honeypot. Off-screen rather than display: none, because some bots skip hidden inputs.
+              Do not change it without a captured failing submission from a real browser with autofill on. */}
+          <div class="hp" aria-hidden="true">
+            <label for="company">Company</label>
+            <input id="company" type="text" name="botcheck" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label for="name" class="t-label">Name</label>
+            <input id="name" name="name" type="text" required autocomplete="name"
+                   aria-describedby="name-error" />
+            <p id="name-error" class="error t-small" data-for="name"></p>
+          </div>
+
+          <div class="field">
+            <label for="email" class="t-label">Email</label>
+            <input id="email" name="email" type="email" required autocomplete="email"
+                   aria-describedby="email-error" />
+            <p id="email-error" class="error t-small" data-for="email"></p>
+          </div>
+
+          <div class="field">
+            <label for="subject" class="t-label">Subject</label>
+            <input id="subject" name="subject" type="text" required
+                   aria-describedby="subject-error" />
+            <p id="subject-error" class="error t-small" data-for="subject"></p>
+          </div>
+
+          <div class="field">
+            <label for="message" class="t-label">Message</label>
+            <textarea id="message" name="message" rows="6" required
+                      aria-describedby="message-error"></textarea>
+            <p id="message-error" class="error t-small" data-for="message"></p>
+          </div>
+
+          <div class="actions">
+            <button id="submit" type="submit" class="t-label">
+              <span class="spinner" aria-hidden="true"></span>
+              <span class="submit-label">Send message</span>
+            </button>
+          </div>
+
+          <p id="form-status" class="form-status" role="status" aria-live="polite" data-email={EMAIL}></p>
+        </form>
+      </div>
+    </section>
+  )}
+</Shell>
+
+<script>
+  // Bound on astro:page-load so it survives client-side navigation, and guarded against binding twice.
+  document.addEventListener('astro:page-load', () => {
+    const copy = document.getElementById('copy-email') as HTMLButtonElement | null;
+    const copyStatus = document.getElementById('copy-status');
+    if (copy && copyStatus && copy.dataset.bound !== 'true') {
+      copy.dataset.bound = 'true';
+      copy.addEventListener('click', async () => {
+        const address = copy.dataset.email ?? '';
+        try {
+          await navigator.clipboard.writeText(address);
+          copyStatus.textContent = 'Copied to your clipboard.';
+        } catch {
+          copyStatus.textContent = 'Could not copy. Select the address above.';
+        }
+        window.setTimeout(() => { copyStatus.textContent = ''; }, 4000);
+      });
+    }
+
+    const form = document.getElementById('contact-form') as HTMLFormElement | null;
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+
+    const status = document.getElementById('form-status') as HTMLElement;
+    const submit = document.getElementById('submit') as HTMLButtonElement;
+    const fields = ['name', 'email', 'subject', 'message'].map(
+      (id) => document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement
+    );
+
+    const messageFor = (el: HTMLInputElement | HTMLTextAreaElement) => {
+      if (!el.value.trim()) return `${el.previousElementSibling?.textContent ?? 'This'} is required.`;
+      if (el instanceof HTMLInputElement && el.type === 'email' && !el.checkValidity())
+        return 'That does not look like an email address.';
+      return '';
+    };
+
+    const show = (el: HTMLInputElement | HTMLTextAreaElement, msg: string) => {
+      const box = document.querySelector(`.error[data-for="${el.id}"]`);
+      if (box) box.textContent = msg;
+      el.setAttribute('aria-invalid', msg ? 'true' : 'false');
+      return !msg;
+    };
+
+    for (const el of fields) {
+      el.addEventListener('blur', () => show(el, messageFor(el)));
+      el.addEventListener('input', () => {
+        if (el.getAttribute('aria-invalid') === 'true') show(el, messageFor(el));
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      status.textContent = '';
+      status.className = 'form-status';
+
+      const results = fields.map((el) => show(el, messageFor(el)));
+      if (results.includes(false)) {
+        const firstBad = fields.find((el) => el.getAttribute('aria-invalid') === 'true');
+        firstBad?.focus();
+        return;
+      }
+
+      const label = submit.querySelector('.submit-label') as HTMLElement;
+      const restLabel = label.textContent ?? 'Send message';
+      submit.disabled = true;
+      form.dataset.state = 'sending';
+      label.textContent = 'Sending';
+      try {
+        // FormData, not JSON. A JSON body triggers a CORS preflight that Cloudflare can block,
+        // and the browser only reports that as Failed to fetch.
+        const body = new FormData(form);
+        body.set('Reply to this person at', (document.getElementById('email') as HTMLInputElement).value);
+        body.set('subject', `Portfolio: ${(document.getElementById('subject') as HTMLInputElement).value.trim()}`);
+
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), 15000);
+        let res: Response;
+        try {
+          res = await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body,
+            signal: controller.signal,
+          });
+        } finally {
+          window.clearTimeout(timer);
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(data.message || `HTTP ${res.status}`);
+        form.reset();
+        form.dataset.state = 'sent';
+        status.className = 'form-status is-ok';
+        status.textContent = 'Message sent. I will reply to the address you gave.';
+      } catch {
+        form.dataset.state = 'failed';
+        status.className = 'form-status is-bad';
+        const address = status.dataset.email ?? '';
+        status.innerHTML =
+          `That did not send. Email <a class="fallback-mail" href="mailto:${address}">${address}</a>` +
+          ` instead, or <button type="button" class="t-label retry">try again</button>.`;
+        status.querySelector('.retry')?.addEventListener('click', () => {
+          form.requestSubmit();
+        });
+      } finally {
+        submit.disabled = false;
+        label.textContent = restLabel;
+      }
+    });
+  });
+</script>
+
+<style>
+  .availability {
+    max-width: 60ch;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+    margin-bottom: 2.5rem;
+  }
+
+  .card-heading {
+    margin: 0 0 1rem;
+    color: var(--color-ink-3);
+  }
+
+  .email {
+    margin: 0 0 1.25rem;
+    font-family: var(--font-mono);
+    font-size: clamp(0.9375rem, 2.6vw, 1.375rem);
+    overflow-wrap: anywhere;
+  }
+
+  .email a {
+    text-decoration: none;
+  }
+
+  .email a:hover,
+  .email a:focus-visible {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+
+  .copy-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  button {
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-control);
+    background: none;
+    color: var(--color-ink-2);
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  .copy-status {
+    color: var(--color-plot);
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .resume-line {
+    margin: 1.25rem 0 0;
+  }
+
+  .form {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 44rem;
+  }
+
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .field label {
+    color: var(--color-ink-3);
+  }
+
+  input[type='text'],
+  input[type='email'],
+  textarea {
+    font: inherit;
+    color: var(--color-ink);
+    background-color: var(--color-raised);
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-control);
+    padding: 10px 12px;
+    width: 100%;
+    transition: border-color var(--dur-fast) var(--ease-spring);
+  }
+
+  input:hover,
+  textarea:hover {
+    border-color: var(--color-ink-3);
+  }
+
+  input:focus-visible,
+  textarea:focus-visible {
+    border-color: var(--color-plot);
+  }
+
+  [aria-invalid='true'] {
+    border-color: var(--color-withdrawn);
+  }
+
+  .error {
+    margin: 0;
+    color: var(--color-withdrawn);
+    min-height: 1lh;
+  }
+
+  .error:empty {
+    min-height: 0;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  #submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-color: var(--color-plot);
+    color: var(--color-ink);
+  }
+
+  #submit:disabled {
+    cursor: progress;
+    color: var(--color-ink-3);
+  }
+
+  .spinner {
+    display: none;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--color-grid);
+    border-top-color: var(--color-plot);
+    border-radius: 50%;
+  }
+
+  [data-state='sending'] .spinner {
+    display: inline-block;
+    animation: spin 700ms linear infinite;
+  }
+
+  @keyframes spin {
+    to { rotate: 360deg; }
+  }
+
+  .form-status {
+    margin: 0;
+    min-height: 1lh;
+  }
+
+  .form-status.is-ok {
+    color: var(--color-plot);
+  }
+
+  .form-status.is-bad {
+    color: var(--color-withdrawn);
+  }
+
+  .form-status :global(.fallback-mail) {
+    color: var(--color-plot);
+    font-family: var(--font-mono);
+    text-decoration-thickness: 2px;
+    overflow-wrap: anywhere;
+  }
+
+  .form-status :global(.retry) {
+    padding: 2px 8px;
+    color: var(--color-ink-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-state='sending'] .spinner {
+      animation: none;
+    }
+  }
+</style>

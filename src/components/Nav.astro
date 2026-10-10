@@ -1,0 +1,213 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+const items = [
+  { href: '/work', label: 'Work' },
+  { href: '/papers', label: 'Papers' },
+  { href: '/teaching', label: 'Teaching' },
+  { href: '/notes', label: 'Notes' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => path === href || path === `${href}/` || path.startsWith(`${href}/`);
+---
+<header class="site-header">
+  <a href="/" class="home-link t-label">Kishan Prajapati</a>
+
+  <button id="nav-toggle" type="button" class="nav-toggle t-label" aria-expanded="false" aria-controls="site-nav">
+    Menu
+  </button>
+
+  <div id="site-nav" class="pill">
+    <nav aria-label="Site">
+      <ul class="nav-list">
+        {items.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              class="nav-link t-label"
+              aria-current={isCurrent(item.href) ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <ThemeToggle />
+  </div>
+</header>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const toggle = document.getElementById('nav-toggle');
+    const group = document.getElementById('site-nav');
+    if (!toggle || !group || toggle.dataset.bound === 'true') return;
+    toggle.dataset.bound = 'true';
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      group.classList.toggle('open', !expanded);
+    });
+  });
+</script>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 24px 20px 16px;
+    background-color: color-mix(in oklab, var(--color-paper) 82%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid transparent;
+  }
+
+  /* Padding and font-size, not transform: the bar has to keep its layout height
+     so it does not cover the content under it. */
+  @supports (animation-timeline: scroll(root block)) {
+    .site-header {
+      animation: nav-shrink linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px 160px;
+    }
+
+    .home-link {
+      animation: nav-name-shrink linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0px 160px;
+    }
+  }
+
+  @keyframes nav-shrink {
+    to {
+      padding-top: 12px;
+      padding-bottom: 10px;
+      border-bottom-color: var(--color-grid);
+    }
+  }
+
+  @keyframes nav-name-shrink {
+    to {
+      font-size: 0.5844rem;
+    }
+  }
+
+  .home-link {
+    position: absolute;
+    left: 20px;
+    top: 32px;
+    color: var(--color-ink-2);
+    text-decoration: none;
+  }
+
+  .home-link:hover,
+  .home-link:focus-visible {
+    color: var(--color-plot);
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    background-color: var(--color-raised);
+    box-shadow: var(--shadow-raised);
+    border: 1px solid var(--color-grid);
+    border-radius: 999px;
+  }
+
+  .nav-list {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-link {
+    display: inline-block;
+    padding: 8px 14px;
+    color: var(--color-ink-2);
+    text-decoration: none;
+    border-radius: 999px;
+  }
+
+  .nav-link[aria-current='page'] {
+    background-color: var(--color-plot-soft);
+    color: var(--color-ink);
+  }
+
+  .nav-toggle {
+    display: none;
+    background: none;
+    border: 1px solid var(--color-grid);
+    border-radius: 999px;
+    color: var(--color-ink-2);
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 1023px) {
+    .home-link {
+      position: static;
+    }
+
+    .site-header {
+      justify-content: space-between;
+      padding-top: 20px;
+    }
+
+    .nav-toggle {
+      display: inline-block;
+    }
+
+    /* display is discrete. allow-discrete keeps the panel painted while it fades out,
+       and @starting-style gives the fade in somewhere to start from. */
+    .pill {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      border-radius: var(--radius-card);
+      padding: 12px;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity var(--dur-fast) var(--ease-in-quart),
+        transform var(--dur-fast) var(--ease-in-quart),
+        display var(--dur-fast) allow-discrete;
+    }
+
+    .pill.open {
+      display: flex;
+      opacity: 1;
+      transform: none;
+      transition-timing-function: var(--ease-out-quart);
+    }
+
+    @starting-style {
+      .pill.open {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+    }
+
+    .nav-list {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .nav-link {
+      border-radius: var(--radius-control);
+    }
+  }
+</style>

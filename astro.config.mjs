@@ -1,0 +1,35 @@
+// @ts-check
+import { defineConfig } from 'astro/config';
+
+import tailwindcss from '@tailwindcss/vite';
+import sitemap from '@astrojs/sitemap';
+import mdx from '@astrojs/mdx';
+
+import externalLinks from './src/integrations/external-links.mjs';
+
+// https://astro.build/config
+export default defineConfig({
+  // Every canonical, og:url, og:image and sitemap entry is derived from this.
+  site: 'https://kishanprajapati.vercel.app',
+
+  // ATCTM merged into MoodLens. Old links still land somewhere.
+  redirects: {
+    '/work/atctm': '/work/moodlens',
+  },
+
+  vite: {
+    plugins: [tailwindcss()],
+    build: {
+      // Lightning CSS folds `animation-timeline` into the `animation`
+      // shorthand, producing `animation: linear both reveal-up view()`. That
+      // is valid CSS Animations Level 2 and no browser implements it, so the
+      // whole declaration is dropped and every scroll reveal stays stuck in
+      // its start state. esbuild leaves the longhand alone.
+      cssMinify: 'esbuild',
+    },
+  },
+
+  // externalLinks runs last, over the emitted HTML, so it also covers links
+  // written in markdown, which never pass through an Astro component.
+  integrations: [sitemap(), mdx(), externalLinks()]
+});

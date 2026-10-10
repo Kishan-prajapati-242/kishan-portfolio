@@ -1,0 +1,298 @@
+---
+import type { ImageMetadata } from 'astro';
+import { getCollection } from 'astro:content';
+
+import Card from '../components/Card.astro';
+import Counter from '../components/Counter.astro';
+import Divider from '../components/Divider.astro';
+import EducationTimeline from '../components/EducationTimeline.astro';
+import SkillsMarquee from '../components/SkillsMarquee.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Shell from '../layouts/Shell.astro';
+import { AVAILABILITY_SHORT } from '../data/availability';
+
+const art = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/work/*.{png,jpg,jpeg,webp}',
+  { eager: true }
+);
+const artFor = (id: string) => art[`../assets/work/${id}.png`]?.default;
+
+const entries = (await getCollection('work', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const featured = entries.slice(0, 2);
+
+// Each delay must match its .stats > li delay in global.css.
+const stats = [
+  { value: 182853, spoken: '182,853 papers indexed', suffix: '', label: 'papers indexed', delay: 520 },
+  { value: 500, spoken: '500 plus students taught', suffix: '+', label: 'students taught', delay: 630 },
+  { value: 400, spoken: '400 plus LeetCode problems solved', suffix: '+', label: 'LeetCode solved', delay: 740 },
+  { value: 4, spoken: '4 papers, three published', suffix: '', label: 'papers written', delay: 850 },
+];
+
+const ledeWords =
+  'I build retrieval and NLP systems, and I measure what they actually do. Right now that means search over 182,853 papers, a paper under review, and five hundred students who need their homework back.'.split(' ');
+
+const teaching = [
+  { course: 'CS 3000 Algorithms and Data', term: 'Summer A 2026' },
+  { course: 'DS 3000 Foundations of Data Science', term: 'Summer B 2026' },
+  { course: 'CS 1800 Discrete Structures', term: 'Fall 2026' },
+];
+
+const papers = [
+  { title: 'First-author paper under review', venue: 'ACL Rolling Review', year: '2026', href: '/work/gatekeepnt' },
+  { title: 'A Review of Transforming AI for Depression Detection', venue: 'CML 2025, Springer LNNS', year: '2026', href: 'https://doi.org/10.1007/978-981-95-2872-1_7' },
+  { title: 'Enhanced Depression Detection on Social Media', venue: 'ICICC 2024, Springer LNNS', year: '2025', href: 'https://doi.org/10.1007/978-981-96-1264-2_23' },
+  { title: 'Towards a Sustainable Future', venue: 'ITM Web of Conferences', year: '2024', href: 'https://doi.org/10.1051/itmconf/20246503015' },
+];
+---
+<Shell
+  ogType="profile"
+  jsonLdPerson
+  description="MS Computer Science at Northeastern. I build retrieval and NLP systems and measure them carefully. Papers, engineering notes, and a search system over 182,853 papers built on a fanless laptop."
+>
+  <p class="badge">
+    <span class="badge-dot" aria-hidden="true"></span>
+    <a href="/contact">{AVAILABILITY_SHORT}</a>
+  </p>
+
+  <SectionHeading as="h1" solid="Software" ghost="Engineer" />
+  <p class="display-lede illuminate">
+    {ledeWords.map((w, i) => (
+      <span class="word" style={`animation-delay:${420 + i * 40}ms`}>{w}{' '}</span>
+    ))}
+  </p>
+
+  <ul class="stats">
+    {stats.map((s) => (
+      <li class="stat-cell">
+        <span class="stat-value">
+          <Counter value={s.value} spoken={s.spoken} suffix={s.suffix} delay={s.delay} />
+        </span>
+        <span class="stat-label" aria-hidden="true">{s.label}</span>
+      </li>
+    ))}
+  </ul>
+
+  <div class="card-grid card-grid-2 focus">
+    <Card>
+      <h2 class="focus-title">Search and retrieval</h2>
+      <p class="focus-body">
+        Making search find what you meant, not just what you typed. I built one
+        over 182,853 research papers that answers in about 10 milliseconds.
+      </p>
+    </Card>
+    <Card>
+      <h2 class="focus-title">NLP research</h2>
+      <p class="focus-body">
+        Training language models, and more often checking whether the scores
+        they earn actually mean anything. One first-author paper under review.
+      </p>
+    </Card>
+    <Card>
+      <h2 class="focus-title">Backend engineering</h2>
+      <p class="focus-body">
+        Python, FastAPI and PostgreSQL. I like the unglamorous part: finding the
+        one missing database index that was making a query 1,875 times slower.
+      </p>
+    </Card>
+    <Card>
+      <h2 class="focus-title">Teaching</h2>
+      <p class="focus-body">
+        Three semesters as a teaching assistant at Northeastern, across
+        algorithms, data science and discrete maths. Over 500 students.
+      </p>
+    </Card>
+  </div>
+
+  <section class="section" aria-labelledby="skills-heading">
+    <SectionHeading id="skills-heading" solid="What I" ghost="Work With" />
+    <div class="section-body"><SkillsMarquee /></div>
+    <p class="more t-label"><a href="/about">The full list</a></p>
+  </section>
+
+  <Divider />
+
+  <section class="section" aria-labelledby="work-heading">
+    <SectionHeading id="work-heading" solid="Selected" ghost="Work" />
+    <div class="card-grid card-grid-2 section-body">
+      {featured.map((entry) => (
+        <ProjectCard entry={entry} art={artFor(entry.id)} showMeasurement={false} headingLevel={3} />
+      ))}
+    </div>
+    <p class="more t-label"><a href="/work">All five projects</a></p>
+  </section>
+
+  <section class="section" aria-labelledby="teaching-heading">
+    <SectionHeading id="teaching-heading" solid="Teaching" ghost="At Khoury" />
+    <ul class="rows slide section-body">
+      {teaching.map((t) => (
+        <li class="row">
+          <h3 class="row-title">{t.course}</h3>
+          <p class="row-meta">{t.term}</p>
+        </li>
+      ))}
+    </ul>
+    <p class="more t-label"><a href="/teaching">How I grade</a></p>
+  </section>
+
+  <Divider />
+
+  <section class="section" aria-labelledby="education-heading">
+    <SectionHeading id="education-heading" solid="Where I" ghost="Studied" />
+    <p class="section-lede section-body">
+      Two degrees, one in progress. Both figures are on the scale the awarding
+      institution used.
+    </p>
+    <EducationTimeline />
+  </section>
+
+  <Divider />
+
+  <section class="section" aria-labelledby="papers-heading">
+    <SectionHeading id="papers-heading" solid="Published" ghost="Papers" />
+    <ul class="rows slide section-body">
+      {papers.map((p) => (
+        <li class="row">
+          <h3 class="row-title"><a href={p.href}>{p.title}</a></h3>
+          <p class="row-meta">{p.year}</p>
+          <p class="row-sub">{p.venue}</p>
+        </li>
+      ))}
+    </ul>
+    <p class="more t-label"><a href="/papers">Full list with DOIs</a></p>
+  </section>
+
+  <section class="section" aria-labelledby="notes-heading">
+    <SectionHeading id="notes-heading" solid="Engineering" ghost="Notes" />
+    <p class="section-lede section-body">
+      I keep a record of the measurements I threw out. Six of them were
+      structurally incapable of failing, which means they proved nothing. The
+      harness now refuses to answer rather than guess.
+    </p>
+    <p class="more t-label"><a href="/notes">Read the record</a></p>
+  </section>
+
+  <Divider />
+
+  <section class="section" aria-labelledby="contact-heading">
+    <SectionHeading id="contact-heading" solid="Get In" ghost="Touch" />
+    <p class="section-lede section-body">
+      I am looking for a software engineering co-op. The fastest way to reach me
+      is email.
+    </p>
+    <p class="contact">
+      <a href="mailto:prajapati.kish@northeastern.edu">prajapati.kish@northeastern.edu</a>
+    </p>
+  </section>
+</Shell>
+
+<style>
+  .section-body {
+    margin-top: 2.5rem;
+  }
+
+  .focus {
+    margin-top: 3.5rem;
+  }
+
+  .focus-title {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-row-title);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .focus-body {
+    margin: 0;
+    color: var(--color-ink-2);
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  .section-lede {
+    max-width: 60ch;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    color: var(--color-ink-2);
+  }
+
+  .more {
+    margin-top: 2rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1.5rem;
+    padding: 7px 14px 7px 12px;
+    border: 1px solid var(--color-grid);
+    border-radius: 999px;
+    background-color: var(--color-raised);
+    box-shadow: var(--shadow-raised);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    transition: border-color var(--dur-fast) var(--ease-spring),
+      translate var(--dur-fast) var(--ease-spring);
+  }
+
+  .badge:hover,
+  .badge:has(:focus-visible) {
+    border-color: var(--color-plot);
+    translate: 0 -2px;
+  }
+
+  .badge a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .badge a:hover,
+  .badge a:focus-visible {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+
+  .badge-dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background-color: var(--color-plot);
+  }
+
+  .stat-cell {
+    /* The query container for .stat-value's cqi sizing. */
+    container-type: inline-size;
+    min-width: 0;
+    padding: 16px 18px;
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-card);
+    background-color: var(--color-raised);
+    box-shadow: var(--shadow-raised);
+    transition: border-color var(--dur-fast) var(--ease-spring),
+      scale var(--dur-fast) var(--ease-spring),
+      translate var(--dur-fast) var(--ease-spring),
+      box-shadow var(--dur-fast) var(--ease-spring);
+  }
+
+  /* scale and translate, not transform: the reveal animation's fill-mode owns transform. */
+  .stat-cell:hover,
+  .stat-cell:has(:focus-visible) {
+    border-color: var(--color-plot);
+    scale: 1.02;
+    translate: 0 -5px;
+    box-shadow: var(--shadow-raised), inset 0 1px 0 0 var(--color-plot-soft);
+  }
+
+  .contact {
+    margin-top: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: clamp(0.9375rem, 3.4vw, 1.25rem);
+    overflow-wrap: anywhere;
+  }
+</style>

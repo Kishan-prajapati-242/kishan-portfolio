@@ -1,0 +1,27 @@
+---
+export interface Props {
+  as?: string;
+  class?: string;
+}
+
+const { as: Tag = 'div', class: className }: Props = Astro.props;
+---
+<Tag class:list={['card', className]}>
+  <slot />
+</Tag>
+
+<style>
+  .card {
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-card);
+    background-color: var(--color-raised);
+    box-shadow: var(--shadow-raised);
+    padding: 24px;
+  }
+
+  /* The lift and its timing are in global.css, so the border and the lift arrive together. */
+  .card:hover,
+  .card:has(:focus-visible) {
+    border-color: var(--color-plot);
+  }
+</style>

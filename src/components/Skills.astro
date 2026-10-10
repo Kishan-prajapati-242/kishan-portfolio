@@ -1,0 +1,149 @@
+---
+// Items without a Simple Icons mark render as text chips. Never substitute a generic mark.
+import { ICONS } from '../data/icons';
+
+interface Props {
+  full?: boolean;
+}
+
+const { full = false }: Props = Astro.props;
+
+const groups = [
+  {
+    heading: 'Languages',
+    items: ['Python', 'TypeScript', 'JavaScript', 'Java', 'C++', 'SQL', 'Bash', 'HTML', 'CSS'],
+  },
+  {
+    heading: 'Backend and data',
+    items: ['FastAPI', 'Flask', 'Node.js', 'Express', 'PostgreSQL', 'MongoDB', 'Docker', 'AWS', 'REST APIs', 'WebSockets'],
+  },
+  {
+    heading: 'ML and NLP',
+    items: ['PyTorch', 'TensorFlow', 'Hugging Face Transformers', 'scikit-learn', 'NumPy', 'Pandas', 'Jupyter'],
+  },
+  {
+    heading: 'Frontend and tools',
+    items: ['React', 'Vite', 'Redux', 'Tailwind', 'Git', 'GitHub', 'GitHub Actions', 'Linux', 'LaTeX'],
+  },
+  {
+    heading: 'Testing and design',
+    items: ['pytest', 'JUnit', 'PIT mutation testing', 'TDD', 'Object-oriented design', 'MVC', 'SOLID'],
+  },
+];
+
+const specialist = [
+  'pgvector', 'HNSW', 'ONNX Runtime', 'QLoRA', 'LoRA', 'PEFT', 'RAG',
+  'Embeddings', 'LLM evaluation', 'EASSE', 'SciSpaCy', 'pg_trgm',
+  'Reciprocal Rank Fusion',
+];
+---
+<div class="skills">
+  {groups.map((group) => (
+    <section class="group">
+      <h3 class="group-heading t-label">{group.heading}</h3>
+      <ul class="items">
+        {group.items.map((label) => {
+          const icon = ICONS[label];
+          return icon ? (
+            <li class="item">
+              <svg class="glyph" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d={icon.d} />
+              </svg>
+              <span>{label}</span>
+            </li>
+          ) : (
+            <li class="item item-textonly"><span class="chip t-label">{label}</span></li>
+          );
+        })}
+      </ul>
+    </section>
+  ))}
+
+  <section class="group">
+    <h3 class="group-heading t-label">Specialist</h3>
+    {full && (
+      <p class="group-note t-small">
+        None of these has a logo. They are the parts of the work that are hard
+        to pick up from a tutorial.
+      </p>
+    )}
+    <ul class="chips specialist">
+      {specialist.map((s) => <li class="chip t-label">{s}</li>)}
+    </ul>
+  </section>
+</div>
+
+<style>
+  .skills {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+  }
+
+  @media (min-width: 720px) {
+    .skills {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.5rem 3rem;
+    }
+  }
+
+  .group-heading {
+    margin: 0 0 1rem;
+    color: var(--color-ink-3);
+  }
+
+  .group-note {
+    margin: -0.5rem 0 1rem;
+    color: var(--color-ink-2);
+    max-width: 44ch;
+  }
+
+  .items {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    color: var(--color-ink-3);
+    transition: color var(--dur-micro) var(--ease-spring);
+  }
+
+  .item:hover,
+  .item:has(:focus-visible) {
+    color: var(--color-ink);
+  }
+
+  .glyph {
+    flex: none;
+    color: var(--color-ink-2);
+    transition: color var(--dur-micro) var(--ease-spring),
+      scale var(--dur-micro) var(--ease-spring);
+  }
+
+  .item:hover .glyph,
+  .item:has(:focus-visible) .glyph {
+    color: var(--color-plot);
+    scale: 1.18;
+  }
+
+  .item-textonly .chip {
+    color: var(--color-ink-2);
+  }
+
+  .specialist {
+    gap: 8px;
+  }
+
+  .specialist .chip {
+    color: var(--color-ink-2);
+  }
+</style>

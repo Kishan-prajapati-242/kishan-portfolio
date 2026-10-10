@@ -1,0 +1,16 @@
+---
+// Uppercase comes from CSS, so the DOM text and the accessible name stay in sentence case.
+export interface Props {
+  solid: string;
+  ghost?: string;
+  id?: string;
+  as?: 'h1' | 'h2';
+}
+
+const { solid, ghost, id, as: Tag = 'h2' }: Props = Astro.props;
+const cls = Tag === 'h1' ? 'display' : 'section-h';
+---
+<Tag class={cls} id={id}>
+  <span class="line"><span class="line-in">{solid}</span></span>
+  {ghost && <span class="line ghost"><span class="line-in">{ghost}</span></span>}
+</Tag>

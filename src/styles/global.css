@@ -1,0 +1,1261 @@
+/* Do not change the colour values. Several sit just above the WCAG AA threshold. */
+@import "tailwindcss";
+
+@theme {
+  /* paper is the page, raised sits on it, paper-2 is cut into it. */
+  --color-paper: #EFF3F1;
+  --color-raised: #FCFDFC;
+  --color-paper-2: #E1E8E4;
+  --color-grid: #CFDCD6;
+  --color-ink: #16201C;
+  --color-ink-2: #57635D;
+  /* Never on paper-2, where it fails AA, and keep it distinct from ink-2. */
+  --color-ink-3: #626C67;
+  /* Decorative glyphs only. It fails contrast as text. */
+  --color-null: #A9B4AE;
+  --color-plot: #1B4D42;
+  --color-plot-soft: #E2EDE8;
+  /* Caveats and limitations only. */
+  --color-annot: #816315;
+  --color-withdrawn: #A63A2E;
+
+  /* Plex Mono has no variable build. Every weight in use needs its own import in Base.astro. */
+  --font-sans: 'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --radius-card: 8px;
+  --radius-panel: 16px;
+  --radius-control: 6px;
+}
+
+/* Lets the case study rail animate to height auto. Nothing may depend on it:
+   where it is missing, panels snap. */
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+}
+
+:root {
+  color-scheme: light;
+  --text-display-xl: clamp(2.5rem, 6vw, 4rem);
+  --text-display-l: clamp(1.75rem, 3.5vw, 2.5rem);
+  --text-h2: 1.375rem;
+  --text-h3: 1.0625rem;
+  --text-body: 1.0625rem;
+  --text-small: 0.875rem;
+  --text-label: 0.6875rem;
+  --text-data: 1rem;
+  --text-data-big: clamp(2rem, 4.5vw, 3.25rem);
+
+  --text-display: clamp(2.75rem, 11.5vw, 6.875rem);
+  /* cqi resolves against .shell-main. 13cqi keeps the longest heading word inside 320px. */
+  --text-section: clamp(1.5rem, 13cqi, 5.625rem);
+  --text-stat: clamp(2.5rem, 4.9vw, 4.375rem);
+  --text-row-title: 1.625rem;
+
+  /* Entrances ease out, exits ease in, hover uses the spring, scroll-driven stays linear.
+     The spring is linear() because cubic-bezier cannot overshoot. */
+  --ease-spring: linear(0, 0.18, 0.42, 0.72, 0.95, 1.06, 1.04, 1.01, 0.99, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);
+  --dur-micro: 200ms;
+  --dur-fast: 320ms;
+  --dur-base: 600ms;
+  --dur-slow: 1000ms;
+  --dur-hero: 1300ms;
+
+  --shadow-raised: 0 1px 2px rgb(22 32 28 / 0.04), 0 6px 16px -6px rgb(22 32 28 / 0.10);
+}
+
+/* Must stay after :root. Both have the same specificity, so source order decides,
+   and color-scheme breaks if this moves. */
+.dark {
+  --color-paper: #111815;
+  --color-raised: #1F2B26;
+  --color-paper-2: #070B0A;
+  --color-grid: #33403B;
+  --color-ink: #E3E9E5;
+  --color-ink-2: #9AA6A0;
+  --color-ink-3: #889490;
+  --shadow-raised: none;
+  --color-null: #4C5651;
+  --color-plot: #5FBFA6;
+  --color-plot-soft: #16302A;
+  --color-annot: #C9A227;
+  --color-withdrawn: #E0796C;
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.65;
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1 {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-display-xl);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    margin-block: 0 0.5em;
+  }
+
+  h2 {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-h2);
+    letter-spacing: -0.01em;
+    margin-block: 2em 0.5em;
+  }
+
+  h3 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: var(--text-h3);
+    margin-block: 1.5em 0.5em;
+  }
+
+  p {
+    margin-block: 0.75em;
+  }
+
+  main {
+    padding-block: 3rem 7rem;
+  }
+
+  a {
+    color: var(--color-plot);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.15em;
+    transition: text-decoration-thickness 120ms;
+  }
+
+  a:hover,
+  a:focus-visible {
+    text-decoration-thickness: 2px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-plot);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .container-site {
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+
+  @media (min-width: 768px) {
+    .container-site {
+      padding-inline: 40px;
+    }
+  }
+
+  .skip-link {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 50;
+    transform: translateY(-300%);
+    background-color: var(--color-paper-2);
+    color: var(--color-ink);
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-control);
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    transform: none;
+  }
+
+  .divider {
+    position: relative;
+    height: 8px;
+    margin-block: 3rem;
+    border-inline: 1px solid var(--color-grid);
+  }
+
+  .divider::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% - 0.5px);
+    height: 1px;
+    background-color: var(--color-grid);
+  }
+
+  .t-display-xl {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-display-xl);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+  }
+
+  .t-display-l {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-display-l);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .t-h2 {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-h2);
+    letter-spacing: -0.01em;
+  }
+
+  .t-h3 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: var(--text-h3);
+  }
+
+  .t-body {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: var(--text-body);
+    line-height: 1.65;
+  }
+
+  .t-small {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: var(--text-small);
+  }
+
+  .t-label {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+  }
+
+  .t-data {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: var(--text-data);
+  }
+
+  .t-data-big {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-data-big);
+    letter-spacing: -0.02em;
+  }
+
+  .measure {
+    max-width: 68ch;
+  }
+
+  .bleed {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Never swap for display: none. The theme toggle's accessible name is computed from this text. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Lives here, not in Measurement.astro, so the row's subgrid override wins without a
+     specificity fight. */
+  .measurement {
+    display: grid;
+    grid-template-rows: auto auto auto auto;
+    row-gap: 0.5rem;
+  }
+
+  .measurement-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (min-width: 900px) {
+    .measurement-row {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto auto auto auto;
+      column-gap: 20px;
+      row-gap: 0;
+    }
+
+    .measurement-row > .measurement {
+      grid-row: span 4;
+      grid-template-rows: subgrid;
+    }
+
+    .measurement-row > .card {
+      grid-row: span 4;
+      display: grid;
+      grid-template-rows: subgrid;
+    }
+
+    .measurement-row > .card > .measurement {
+      grid-row: span 4;
+      grid-template-rows: subgrid;
+    }
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (min-width: 900px) {
+    .card-grid-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .card-grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .chip {
+    display: inline-block;
+    border: 1px solid var(--color-grid);
+    border-radius: var(--radius-control);
+    padding: 4px 8px;
+    color: var(--color-ink-2);
+  }
+
+  .shell {
+    max-width: 1140px;
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+
+  .shell-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  .shell-main,
+  .shell-side {
+    min-width: 0;
+  }
+
+  /* The container for --text-section's cqi sizing. Without it the headings overflow at 320px. */
+  .shell-main {
+    container-type: inline-size;
+  }
+
+  @media (min-width: 1024px) {
+    .shell {
+      padding-inline: 0;
+    }
+
+    .shell-grid {
+      grid-template-columns: 344px minmax(0, 1fr);
+      column-gap: 100px;
+      align-items: start;
+    }
+
+    .shell-side {
+      position: sticky;
+      top: 40px;
+    }
+  }
+
+  .display,
+  .section-h {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  .display {
+    font-size: var(--text-display);
+  }
+
+  .section-h {
+    font-size: var(--text-section);
+  }
+
+  .sub-h {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  .ghost {
+    display: block;
+    color: color-mix(in oklab, var(--color-ink) 18%, var(--color-paper));
+  }
+
+  /* The mask wrapper must not introduce its own line box metrics. */
+  .display .line,
+  .section-h .line {
+    line-height: inherit;
+  }
+
+  @media (max-width: 1023px) {
+    .display,
+    .section-h,
+    .display-lede {
+      text-align: center;
+    }
+
+    .display-lede {
+      margin-inline: auto;
+    }
+  }
+
+  .display-lede {
+    max-width: 46ch;
+    font-size: 1.125rem;
+    line-height: 1.4;
+    color: var(--color-ink-2);
+    margin: 1.5rem 0 0;
+  }
+
+  /* Two columns, then four. Never three, which leaves the fourth stat alone on a row. */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 3rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 900px) {
+    .stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 20px;
+    }
+  }
+
+  .stats > li {
+    min-width: 0;
+  }
+
+  @media (max-width: 899px) {
+    .stat-label {
+      max-width: none;
+      font-size: 0.8125rem;
+    }
+  }
+
+  .stat-value {
+    display: block;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    /* cqi against .stat-cell, not the viewport. A viewport clamp overflowed the card at 390px
+       and the wipe's clip-path cut the digits. */
+    font-size: clamp(1rem, 20cqi, var(--text-stat));
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  .stat-label {
+    display: block;
+    max-width: 14ch;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+
+  .rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    /* clip, not hidden. hidden makes a scroll container and freezes every view() reveal in the list. */
+    overflow-x: clip;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 8px 32px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--color-grid);
+  }
+
+  .row:first-child {
+    border-top: 1px solid var(--color-grid);
+  }
+
+  .row-title {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-row-title);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+  }
+
+  .row-title a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .row-title a:hover,
+  .row-title a:focus-visible {
+    color: var(--color-plot);
+  }
+
+  .row-sub {
+    margin: 0.5rem 0 0;
+    grid-column: 1;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--color-ink-2);
+    max-width: 60ch;
+  }
+
+  .row-meta {
+    grid-column: 2;
+    grid-row: 1;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--color-ink-3);
+    white-space: nowrap;
+  }
+
+  .section {
+    margin-top: 9rem;
+  }
+
+  /* Every heading that is a link target clears the pinned nav. */
+  :is(h1, h2, h3)[id],
+  .section-h,
+  .sub-h {
+    scroll-margin-top: 6rem;
+  }
+}
+
+/* Above the fold runs on the time clock, everything below on animation-timeline: view().
+   Never set a duration or delay on a scroll timeline. Stagger with animation-range. */
+@keyframes reveal-up { to { opacity: 1; transform: none; } }
+@keyframes reveal-fade { to { opacity: 1; } }
+@keyframes line-up { to { transform: none; } }
+@keyframes unblur { to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes slide-in { to { opacity: 1; transform: none; } }
+@keyframes wipe-up { to { clip-path: inset(0 0 0 0); } }
+@keyframes progress-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Counter.astro splits a value into comma groups. pad3 keeps each group after the first three digits wide. */
+@property --n {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+@counter-style pad3 {
+  system: extends decimal;
+  pad: 3 "0";
+}
+
+.counter-groups {
+  font-variant-numeric: tabular-nums;
+}
+
+@supports (counter-set: x 1) {
+  .counter-group {
+    counter-reset: n var(--n);
+    animation-duration: var(--dur-slow);
+    animation-timing-function: var(--ease-out-quart);
+    animation-fill-mode: both;
+  }
+
+  .counter-group.is-lead::after {
+    content: counter(n);
+  }
+
+  .counter-group.is-pad::after {
+    content: counter(n, pad3);
+  }
+}
+
+.line {
+  display: block;
+  /* clip-path, not overflow: hidden. overflow makes a scroll container, and view() inside
+     would read as fully in view from the first frame. */
+  clip-path: inset(0);
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.line-in {
+  display: block;
+}
+
+.profile {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: reveal-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.profile .portrait {
+  clip-path: inset(0 0 100% 0);
+  animation: wipe-up var(--dur-slow) var(--ease-out-expo) 120ms both;
+}
+
+/* transition:persist keeps the node but restarts its CSS animations, so the entry is off
+   after the first navigation. Base.astro sets data-navigated on astro:after-swap. */
+[data-navigated] .profile,
+[data-navigated] .profile .portrait {
+  animation: none;
+  opacity: 1;
+  transform: none;
+  clip-path: none;
+}
+
+.display .line-in {
+  transform: translateY(110%);
+  animation: line-up var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.display .line:nth-child(1) .line-in { animation-delay: 200ms; }
+.display .line:nth-child(2) .line-in { animation-delay: 280ms; }
+
+.display-lede {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: reveal-up var(--dur-base) var(--ease-out-quart) 420ms both;
+}
+
+.stats > li {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: reveal-up var(--dur-base) var(--ease-out-quart) both;
+}
+
+/* Each delay matches the delay passed to that cell's Counter in index.astro. */
+.stats > li:nth-child(1) { animation-delay: 520ms; }
+.stats > li:nth-child(2) { animation-delay: 630ms; }
+.stats > li:nth-child(3) { animation-delay: 740ms; }
+.stats > li:nth-child(4) { animation-delay: 850ms; }
+
+.stat-value {
+  clip-path: inset(0 0 100% 0);
+  animation: wipe-up var(--dur-base) var(--ease-out-expo) both;
+}
+
+.stats > li:nth-child(1) .stat-value { animation-delay: 520ms; }
+.stats > li:nth-child(2) .stat-value { animation-delay: 630ms; }
+.stats > li:nth-child(3) .stat-value { animation-delay: 740ms; }
+.stats > li:nth-child(4) .stat-value { animation-delay: 850ms; }
+
+.focus > * {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: reveal-up var(--dur-base) var(--ease-out-quart) both;
+}
+
+.focus > *:nth-child(1) { animation-delay: 760ms; }
+.focus > *:nth-child(2) { animation-delay: 870ms; }
+.focus > *:nth-child(3) { animation-delay: 980ms; }
+.focus > *:nth-child(4) { animation-delay: 1090ms; }
+
+@supports (animation-timeline: view()) {
+  /* The hidden start state exists only inside this guard, so unsupported browsers get static content.
+     Ranges are in cover, never entry: an entry range lands differently for every element height. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: cover 5% cover 40%;
+  }
+
+  .reveal-text {
+    opacity: 0;
+    transform: translateY(28px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: cover 5% cover 40%;
+  }
+
+  .reveal-label {
+    opacity: 0;
+    animation: reveal-fade linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 28%;
+  }
+
+  .skills .item,
+  .skills .specialist .chip {
+    opacity: 0;
+    transform: translateY(22px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+  }
+
+  .skills .item:nth-child(4n + 1),
+  .skills .specialist .chip:nth-child(4n + 1) { animation-range: cover 5% cover 40%; }
+  .skills .item:nth-child(4n + 2),
+  .skills .specialist .chip:nth-child(4n + 2) { animation-range: cover 8% cover 43%; }
+  .skills .item:nth-child(4n + 3),
+  .skills .specialist .chip:nth-child(4n + 3) { animation-range: cover 11% cover 46%; }
+  .skills .item:nth-child(4n + 4),
+  .skills .specialist .chip:nth-child(4n + 4) { animation-range: cover 14% cover 49%; }
+
+  /* On .screen, not the img. fill-mode both owns the properties it animates, so on the img
+     it would beat the hover zoom. */
+  .project-card .art .screen {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.04);
+    animation: unblur linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 42%;
+  }
+
+  .rows.slide > .row:nth-child(odd) {
+    transform: translateX(-40px);
+    animation-name: slide-in;
+  }
+
+  .rows.slide > .row:nth-child(even) {
+    transform: translateX(40px);
+    animation-name: slide-in;
+  }
+
+  .prose .data-table,
+  .data-table {
+    opacity: 0;
+    animation: reveal-fade linear both;
+    animation-timeline: view();
+    animation-range: cover 5% cover 40%;
+  }
+
+  .section-h .line-in {
+    transform: translateY(110%);
+    animation: line-up linear both;
+    animation-timeline: view();
+    animation-range: cover 2% cover 34%;
+  }
+
+  .section-h .line:nth-child(2) .line-in {
+    animation-range: cover 6% cover 38%;
+  }
+
+  .card-grid > *,
+  .rows > .row {
+    opacity: 0;
+    transform: translateY(40px) scale(0.97);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+  }
+
+  .card-grid > *:nth-child(4n + 1),
+  .rows > .row:nth-child(4n + 1) { animation-range: cover 5% cover 40%; }
+  .card-grid > *:nth-child(4n + 2),
+  .rows > .row:nth-child(4n + 2) { animation-range: cover 8% cover 43%; }
+  .card-grid > *:nth-child(4n + 3),
+  .rows > .row:nth-child(4n + 3) { animation-range: cover 11% cover 46%; }
+  .card-grid > *:nth-child(4n + 4),
+  .rows > .row:nth-child(4n + 4) { animation-range: cover 14% cover 49%; }
+
+  .card-grid > *:first-child:not(:only-child),
+  .rows > .row:first-child:not(:only-child) {
+    transform: translateY(64px) scale(0.95);
+  }
+
+  .rows.slide > .row:first-child:not(:only-child) {
+    transform: translateX(-64px);
+  }
+
+  /* The hero cards run on the time clock. The shorthand above resets their duration and easing,
+     so both come back here and the ranges are cleared. */
+  .card-grid.focus > * {
+    animation-timeline: auto;
+    animation-duration: var(--dur-base);
+    animation-timing-function: var(--ease-out-quart);
+    animation-range: normal;
+  }
+
+  .prose > :is(h2, h3, figure, blockquote, ul, ol, pre, .data-table, .measurement),
+  .story > :is(h2, h3, figure, blockquote, ul, ol, table, .withdrawn-pair, .data-table, .measurement) {
+    opacity: 0;
+    transform: translateY(28px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: cover 5% cover 40%;
+  }
+
+  /* Paragraphs reveal on short pages only. CaseStudy.astro sets .is-longform on entries with
+     h2 sections, and /notes uses .story, which this does not match. */
+  .prose:not(.is-longform) > p {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: cover 4% cover 36%;
+  }
+
+  .prose > h2,
+  .story > h2 {
+    transform: translateY(48px);
+  }
+
+  /* A late range near the bottom of a short page never completes, so these end at cover 32%.
+     .shell-main > :last-child, not main > :last-child, which matches the shell itself. */
+  .section:last-of-type .reveal,
+  .section:last-of-type .reveal-text,
+  .section:last-of-type .card-grid > *,
+  .section:last-of-type .rows > .row,
+  .section:last-of-type .section-h .line-in,
+  .shell-main > :last-child .card-grid > *,
+  .shell-main > :last-child .rows > .row,
+  .shell-main > :last-child .section-h .line-in {
+    animation-range: cover 2% cover 32%;
+  }
+
+  .scroll-progress {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background-color: var(--color-plot);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* Lift with translate: reveal-up's fill-mode owns transform. Never put transform in a rule
+   with scale or translate, since Lightning CSS folds them together and drops the others. */
+.card {
+  transition: border-color var(--dur-fast) var(--ease-spring),
+    translate var(--dur-fast) var(--ease-spring);
+}
+
+.card:hover,
+.card:has(:focus-visible) {
+  translate: 0 -5px;
+}
+
+button {
+  position: relative;
+  overflow: hidden;
+  transition: background-color var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) var(--ease-spring),
+    color var(--dur-fast) var(--ease-spring),
+    scale var(--dur-micro) var(--ease-spring);
+}
+
+button:hover,
+button:focus-visible {
+  background-color: var(--color-plot-soft);
+}
+
+button:active {
+  scale: 0.98;
+}
+
+@property --sweep {
+  syntax: '<percentage>';
+  initial-value: -60%;
+  inherits: false;
+}
+
+button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    45deg,
+    transparent calc(var(--sweep) - 18%),
+    color-mix(in oklab, var(--color-plot) 22%, transparent) var(--sweep),
+    transparent calc(var(--sweep) + 18%)
+  );
+}
+
+button:hover::after,
+button:focus-visible::after {
+  opacity: 1;
+  /* Linear on purpose. The spring would overshoot the beam past the edge. */
+  animation: sweep var(--dur-slow) linear 1;
+}
+
+@keyframes sweep {
+  from { --sweep: -60%; }
+  to { --sweep: 160%; }
+}
+
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 5px;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 240ms var(--ease-spring);
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    /* Without this, scroll reveals stay frozen in their hidden start state. */
+    animation-timeline: auto !important;
+  }
+
+  .reveal,
+  [class*="reveal"],
+  .line-in,
+  .card-grid > *,
+  .rows > .row,
+  .stats > li,
+  .stat-value,
+  .focus > *,
+  .profile,
+  .profile .portrait,
+  .display-lede,
+  .skills .item,
+  .skills .specialist .chip,
+  .project-card .art .screen,
+  .project-card .art img,
+  .prose .data-table,
+  .data-table,
+  .prose > *,
+  .story > * {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    filter: none !important;
+  }
+
+  .scroll-progress {
+    display: none;
+  }
+
+  .site-header,
+  .home-link,
+  .counter-group,
+  .marquee-track,
+  .is-flagship .art img,
+  button::after {
+    animation: none !important;
+  }
+
+  /* One of transform, scale or translate per rule. Lightning CSS folds them and drops the reset. */
+  .project-card:hover,
+  .project-card:has(:focus-visible),
+  .card:hover,
+  .card:has(:focus-visible),
+  .rows > .row:hover,
+  .rows > .row:has(:focus-visible),
+  .skills .item:hover,
+  .skills .item:has(:focus-visible),
+  .data-table.is-card:hover,
+  .data-table.is-card:has(:focus-visible),
+  .badge:hover,
+  .badge:has(:focus-visible) {
+    translate: none !important;
+  }
+
+  .stat-cell:hover,
+  .stat-cell:has(:focus-visible) {
+    scale: none !important;
+    translate: none !important;
+  }
+
+  .project-card:hover .art img,
+  .project-card:has(:focus-visible) .art img,
+  .item:hover .glyph,
+  .item:has(:focus-visible) .glyph {
+    scale: none !important;
+  }
+
+  .project-card:hover .more a::after,
+  .project-card:has(:focus-visible) .more a::after {
+    translate: none !important;
+  }
+
+  button::after {
+    display: none;
+  }
+}
+
+@property --shimmer {
+  syntax: '<percentage>';
+  initial-value: -20%;
+  inherits: false;
+}
+
+.illuminate .word {
+  color: var(--color-ink-3);
+  animation: illuminate var(--dur-base) var(--ease-out-quart) both;
+}
+
+@keyframes illuminate {
+  to {
+    color: var(--color-ink-2);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .display .line-in {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-ink) calc(var(--shimmer) - 12%),
+      color-mix(in oklab, var(--color-plot) 55%, var(--color-ink)) var(--shimmer),
+      var(--color-ink) calc(var(--shimmer) + 12%)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation-name: line-up, shimmer;
+    animation-timeline: auto, auto;
+    animation-duration: var(--dur-slow), var(--dur-hero);
+    animation-timing-function: var(--ease-out-expo), var(--ease-out-quart);
+    animation-fill-mode: both, both;
+    animation-iteration-count: 1, 1;
+  }
+
+  .display .line:nth-child(1) .line-in { animation-delay: 200ms, 620ms; }
+  .display .line:nth-child(2) .line-in { animation-delay: 280ms, 700ms; }
+
+  .display .ghost .line-in {
+    background-image: none;
+    color: color-mix(in oklab, var(--color-ink) 18%, var(--color-paper));
+  }
+
+  @keyframes shimmer {
+    to {
+      --shimmer: 120%;
+    }
+  }
+
+  .section {
+    animation: exit-depth linear both;
+    animation-timeline: view();
+    animation-range: exit 0% exit 100%;
+  }
+
+  @keyframes exit-depth {
+    to {
+      opacity: 0.7;
+      transform: scale(0.985);
+    }
+  }
+}
+
+.project-card:hover,
+.project-card:has(:focus-visible) {
+  translate: 0 -5px;
+}
+
+.project-card .art img {
+  scale: 1;
+  filter: saturate(0.92);
+  transition: scale var(--dur-fast) var(--ease-spring),
+    filter var(--dur-fast) var(--ease-spring);
+}
+
+.project-card:hover .art img,
+.project-card:has(:focus-visible) .art img {
+  scale: 1.09;
+  filter: saturate(1);
+}
+
+.project-card .more a::after {
+  content: "\2192";
+  display: inline-block;
+  margin-left: 0.4em;
+  transition: translate var(--dur-fast) var(--ease-spring);
+}
+
+/* Reserves the 5px the arrow travels, so the nudge cannot wrap the next link. */
+.project-card .more a {
+  padding-right: 5px;
+}
+
+.project-card:hover .more a::after,
+.project-card:has(:focus-visible) .more a::after {
+  translate: 5px 0;
+}
+
+.is-flagship:hover .art img,
+.is-flagship:has(:focus-visible) .art img {
+  animation: ken-burns 6s linear both;
+}
+
+@keyframes ken-burns {
+  to {
+    translate: -3% 0;
+  }
+}
+
+.card,
+.stat-cell,
+.data-table.is-card,
+.rows > .row,
+.skills .item,
+.badge {
+  position: relative;
+  isolation: isolate;
+}
+
+/* --mx and --my come from one delegated pointermove listener in Base.astro.
+   With no script the layer stays at opacity 0. */
+.card::before,
+.stat-cell::before,
+.data-table.is-card::before,
+.rows > .row::before,
+.skills .item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(
+    340px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in oklab, var(--color-plot) 16%, var(--color-raised)),
+    transparent 72%
+  );
+  transition: opacity var(--dur-fast) var(--ease-spring);
+}
+
+.card:hover::before,
+.card:has(:focus-visible)::before,
+.stat-cell:hover::before,
+.stat-cell:has(:focus-visible)::before,
+.data-table.is-card:hover::before,
+.data-table.is-card:has(:focus-visible)::before,
+.rows > .row:hover::before,
+.rows > .row:has(:focus-visible)::before,
+.skills .item:hover::before,
+.skills .item:has(:focus-visible)::before {
+  opacity: 1;
+}
+
+.rows > .row {
+  padding-inline: 12px;
+  border-radius: var(--radius-card);
+  transition: translate var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) var(--ease-spring);
+}
+
+.rows > .row:hover,
+.rows > .row:has(:focus-visible) {
+  translate: 0 -5px;
+}
+
+.skills .item {
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: var(--radius-control);
+  transition: translate var(--dur-micro) var(--ease-spring);
+}
+
+.skills .item:hover,
+.skills .item:has(:focus-visible) {
+  translate: 0 -3px;
+}
+
+.data-table.is-card {
+  transition: border-color var(--dur-fast) var(--ease-spring),
+    translate var(--dur-fast) var(--ease-spring);
+}
+
+.data-table.is-card:hover,
+.data-table.is-card:has(:focus-visible) {
+  translate: 0 -5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .illuminate .word {
+    color: var(--color-ink-2) !important;
+    animation: none !important;
+  }
+
+  .display .line-in {
+    background-image: none !important;
+    color: var(--color-ink) !important;
+  }
+
+  .section {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .project-card::before {
+    display: none;
+  }
+}
